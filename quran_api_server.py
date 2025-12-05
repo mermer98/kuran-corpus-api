@@ -419,6 +419,9 @@ def search():
             "count": len(results),
             "note": "Demo mode - Limited search results"
         }, f"Found {len(results)} results for '{query}'")
+        
+    except Exception as e:
+        return APIResponse.error(f"Search error: {str(e)}", "SERVER_ERROR", 500)
 
 # ============================================================================
 # 📊 ANALYTICS ENDPOINTS
