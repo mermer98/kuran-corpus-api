@@ -125,6 +125,19 @@ def health_check():
         "uptime": "running"
     }, "API is healthy")
 
+@app.route('/api/demo', methods=['GET'])
+def demo():
+    """Demo endpoint - database gerektirmez"""
+    return APIResponse.success({
+        "message": "Quran Corpus API is running!",
+        "demo_data": {
+            "surah_count": 114,
+            "total_verses": 6236,
+            "languages": ["Arabic", "Turkish", "English"],
+            "features": ["Search", "Analytics", "Morphology"]
+        }
+    }, "Demo endpoint working")
+
 @app.route('/api/info', methods=['GET'])
 @rate_limit
 def api_info():
