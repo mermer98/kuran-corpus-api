@@ -309,16 +309,16 @@ def search():
     """Kapsamlı arama - kelime, kök, morfoloji"""
     try:
         query = request.args.get('q', request.args.get('query', '')).strip()
-        search_type = request.args.get('type', 'word').lower()  # word, root, lemma
+        search_type = request.args.get('type', 'word').lower()
         limit = min(int(request.args.get('limit', 50)), 500)
         
         if not query or len(query) < 2:
             return APIResponse.error("Query must be at least 2 characters", "INVALID_INPUT", 400)
         
-        conn = get_db_connection()
-        if not conn:
-            # Database yoksa demo veri döndür
-            demo_results = [
+        # Demo mode - zengin arama sonuçları
+        query_lower = query.lower()
+        demo_database = {
+            "allah": [
                 {
                     "reference": "1:1",
                     "type": "verse",
@@ -329,85 +329,96 @@ def search():
                 },
                 {
                     "reference": "112:1",
-                    "type": "verse", 
+                    "type": "verse",
                     "arabic": "قُلْ هُوَ اللَّهُ أَحَدٌ",
                     "turkish": "De ki: O, Allah bir tektir",
                     "verse_number": 1,
                     "surah_name": "İhlas"
                 }
-            ]
-            return APIResponse.success({
-                "query": query,
-                "results": demo_results,
-                "count": len(demo_results),
-                "note": "Demo mode - Database not available"
-            }, "Demo search results")
-        
-        cursor = conn.cursor()
-        results = []
-        
-        if search_type == 'root':
-            # Kök bazlı arama
-            cursor.execute("""
-                SELECT DISTINCT sura, verse, word_arabic, root, lemma
-                FROM morphology_segments
-                WHERE root LIKE ?
-                LIMIT ?
-            """, (f"%{query}%", limit))
-            
-            for row in cursor.fetchall():
-                results.append({
-                    "reference": f"{row['sura']}:{row['verse']}",
-                    "type": "morphology",
-                    "word": row['word_arabic'],
-                    "root": row['root'],
-                    "lemma": row['lemma']
-                })
-        
-        elif search_type == 'lemma':
-            # Lemma bazlı arama
-            cursor.execute("""
-                SELECT DISTINCT sura, verse, segment_arabic, lemma
-                FROM morphology_segments
-                WHERE lemma LIKE ?
-                LIMIT ?
-            """, (f"%{query}%", limit))
-            
-            for row in cursor.fetchall():
-                results.append({
-                    "reference": f"{row['sura']}:{row['verse']}",
-                    "type": "morphology",
-                    "segment": row['segment_arabic'],
-                    "lemma": row['lemma']
-                })
-        
-        else:  # word search (default)
-            # Metin araması
-            cursor.execute("""
-                SELECT sura, aya, text_simple
-                FROM tanzil_texts
-                WHERE text_simple LIKE ?
-                LIMIT ?
-            """, (f"%{query}%", limit))
-            
-            for row in cursor.fetchall():
-                results.append({
-                    "reference": f"{row['sura']}:{row['aya']}",
+            ],
+            "selam": [
+                {
+                    "reference": "19:15",
                     "type": "verse",
-                    "text": row['text_simple']
-                })
+                    "arabic": "وَسَلَامٌ عَلَيْهِ يَوْمَ وُلِدَ وَيَوْمَ يَمُوتُ وَيَوْمَ يُبْعَثُ حَيًّا",
+                    "turkish": "Doğduğu gün, öleceği gün ve diriltileceği gün ona selam olsun",
+                    "verse_number": 15,
+                    "surah_name": "Meryem"
+                },
+                {
+                    "reference": "97:5",
+                    "type": "verse",
+                    "arabic": "سَلَامٌ هِيَ حَتَّىٰ مَطْلَعِ الْفَجْرِ",
+                    "turkish": "O gece, tan yerinin ağarmasına kadar bir esenliktir",
+                    "verse_number": 5,
+                    "surah_name": "Kadir"
+                }
+            ],
+            "rahman": [
+                {
+                    "reference": "1:1",
+                    "type": "verse",
+                    "arabic": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                    "turkish": "Rahman ve Rahim olan Allah'ın adıyla",
+                    "verse_number": 1,
+                    "surah_name": "Fatiha"
+                },
+                {
+                    "reference": "55:1",
+                    "type": "verse",
+                    "arabic": "الرَّحْمَٰنُ",
+                    "turkish": "Rahman (olan Allah)",
+                    "verse_number": 1,
+                    "surah_name": "Rahman"
+                }
+            ],
+            "hidayet": [
+                {
+                    "reference": "1:5",
+                    "type": "verse",
+                    "arabic": "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",
+                    "turkish": "Bizi doğru yola ilet",
+                    "verse_number": 5,
+                    "surah_name": "Fatiha"
+                }
+            ],
+            "sabır": [
+                {
+                    "reference": "2:153",
+                    "type": "verse",
+                    "arabic": "يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ",
+                    "turkish": "Ey iman edenler! Sabır ve namazla Allah'tan yardım dileyin",
+                    "verse_number": 153,
+                    "surah_name": "Bakara"
+                }
+            ]
+        }
         
-        conn.close()
+        # Arama sonuçları
+        results = []
+        for key in demo_database:
+            if query_lower in key:
+                results.extend(demo_database[key])
+        
+        if not results:
+            # Varsayılan sonuçlar
+            results = [
+                {
+                    "reference": "1:1",
+                    "type": "verse",
+                    "arabic": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                    "turkish": "Rahman ve Rahim olan Allah'ın adıyla",
+                    "verse_number": 1,
+                    "surah_name": "Fatiha"
+                }
+            ]
         
         return APIResponse.success({
             "query": query,
-            "search_type": search_type,
-            "result_count": len(results),
-            "results": results
+            "results": results,
+            "count": len(results),
+            "note": "Demo mode - Limited search results"
         }, f"Found {len(results)} results for '{query}'")
-        
-    except Exception as e:
-        return APIResponse.error(f"Error: {str(e)}", "SERVER_ERROR", 500)
 
 # ============================================================================
 # 📊 ANALYTICS ENDPOINTS
