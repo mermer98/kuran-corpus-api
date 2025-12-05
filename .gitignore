@@ -1,0 +1,41 @@
+# Büyük veritabanı ve resim dosyalarını hariç tut
+*.db
+*.sqlite
+*.sqlite3
+quran_dictionary.db
+morphology.db
+tanzil_texts.db
+
+# Resim dosyaları
+*.jpg
+*.png
+*.gif
+*.bmp
+resimli meal/
+images/
+images_tajweed.ayt
+images.ayt
+
+# Geçici dosyalar
+*.tmp
+*.bak
+*.log
+__pycache__/
+*.pyc
+*.pyo
+
+# Yedekleme klasörü
+yedekleme28112025saat1520/
+
+# Node modules (eğer varsa)
+node_modules/
+
+# IDE dosyaları
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS dosyaları
+.DS_Store
+Thumbs.db

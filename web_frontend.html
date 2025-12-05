@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kur'an Corpus Web Uygulaması</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .search-section { margin-bottom: 20px; }
+        .results { margin-top: 20px; }
+        input, button { padding: 10px; margin: 5px; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .verse { border-bottom: 1px solid #eee; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌙 Kur'an Corpus Web Uygulaması</h1>
+            <p>Kur'an-ı Kerim arama ve okuma uygulaması</p>
+        </div>
+
+        <div class="search-section">
+            <input type="text" id="searchInput" placeholder="Ayet ara... (örnek: Rahman)" style="width: 300px;">
+            <button onclick="searchVerses()">Ara</button>
+            <button onclick="loadRandomVerse()">Rastgele Ayet</button>
+        </div>
+
+        <div id="results" class="results">
+            <p>Arama yapmak için yukarıdaki kutuyu kullanın.</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000'; // Yerel API
+
+        async function searchVerses() {
+            const query = document.getElementById('searchInput').value;
+            if (!query.trim()) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/search?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                displayResults(data);
+            } catch (error) {
+                document.getElementById('results').innerHTML = '<p>Hata: ' + error.message + '</p>';
+            }
+        }
+
+        async function loadRandomVerse() {
+            try {
+                const response = await fetch(`${API_BASE}/api/verses/random`);
+                const data = await response.json();
+
+                displayResults(data);
+            } catch (error) {
+                document.getElementById('results').innerHTML = '<p>Hata: ' + error.message + '</p>';
+            }
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+
+            if (!data || !data.data || data.data.length === 0) {
+                resultsDiv.innerHTML = '<p>Sonuç bulunamadı.</p>';
+                return;
+            }
+
+            let html = `<h3>${data.data.length} sonuç bulundu:</h3>`;
+            data.data.forEach(item => {
+                html += `
+                    <div class="verse">
+                        <strong>${item.sure_adi} ${item.sure_no}:${item.ayet_no}</strong><br>
+                        <div dir="rtl" style="font-size: 18px; margin: 10px 0;">${item.arabic_text || item.ayet_metin}</div>
+                        <div>${item.turkish_text || item.ayet_metin_turkce || ''}</div>
+                    </div>
+                `;
+            });
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // Sayfa yüklendiğinde rastgele ayet göster
+        window.onload = loadRandomVerse;
+    </script>
+</body>
+</html>
