@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🕌 Kuran Corpus - Gelişmiş Arama</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1em;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+            color: #667eea;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .search-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .search-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"], select {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            margin-top: 20px;
+        }
+
+        .verse-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .verse-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .verse-reference {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+
+        .verse-arabic {
+            font-family: 'Traditional Arabic', 'Arabic Typesetting', 'Geeza Pro', serif;
+            font-size: 28px;
+            line-height: 2;
+            text-align: right;
+            direction: rtl;
+            color: #2c3e50;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-right: 4px solid #667eea;
+        }
+
+        .verse-turkish {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #495057;
+            margin: 15px 0;
+            padding: 15px;
+            background: #fff;
+            border-left: 4px solid #764ba2;
+            border-radius: 10px;
+        }
+
+        .verse-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #f5c6cb;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #c3e6cb;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .filter-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .word-analysis {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .word-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 5px;
+            font-size: 0.85em;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .search-group {
+                flex-direction: column;
+            }
+
+            input[type="text"], select, button {
+                width: 100%;
+            }
+
+            .verse-arabic {
+                font-size: 22px;
+            }
+        }
+
+        .demo-badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🕌 Kuran Corpus - Gelişmiş Arama <span class="demo-badge">DEMO MODE</span></h1>
+            <p>Kuran'da kelime, kök ve morfolojik analiz ile gelişmiş arama yapın</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('search')">🔍 Arama</button>
+            <button class="tab" onclick="switchTab('morphology')">📚 Morfoloji</button>
+            <button class="tab" onclick="switchTab('statistics')">📊 İstatistikler</button>
+            <button class="tab" onclick="switchTab('translations')">🌐 Çoklu Meal</button>
+            <button class="tab" onclick="switchTab('advanced')">⚡ Gelişmiş</button>
+        </div>
+
+        <!-- ARAMA SEKMESİ -->
+        <div id="search" class="tab-content active">
+            <div class="search-section">
+                <h2>🔍 Kuran'da Arama</h2>
+                <div class="search-group">
+                    <input type="text" id="searchInput" placeholder="Aranacak kelimeyi yazın (ör: rahman, selam, hidayet)">
+                    <select id="searchType">
+                        <option value="word">Kelime Araması</option>
+                        <option value="root">Kök Araması</option>
+                        <option value="lemma">Lemma Araması</option>
+                        <option value="semantic">Semantik Arama</option>
+                    </select>
+                    <button onclick="performSearch()">Ara</button>
+                    <button onclick="getRandomVerse()">🎲 Rastgele Ayet</button>
+                </div>
+                
+                <div class="filter-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="showArabic" checked>
+                        <label for="showArabic">Arapça Metin</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="showTurkish" checked>
+                        <label for="showTurkish">Türkçe Meal</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="showMorphology">
+                        <label for="showMorphology">Morfolojik Analiz</label>
+                    </div>
+                </div>
+            </div>
+            <div id="searchResults" class="results"></div>
+        </div>
+
+        <!-- MORFOLOJİ SEKMESİ -->
+        <div id="morphology" class="tab-content">
+            <div class="search-section">
+                <h2>📚 Morfolojik Analiz</h2>
+                <div class="search-group">
+                    <input type="text" id="morphSurah" placeholder="Sure No (1-114)" style="max-width: 150px;">
+                    <input type="text" id="morphVerse" placeholder="Ayet No" style="max-width: 150px;">
+                    <button onclick="getMorphology()">Analiz Et</button>
+                </div>
+            </div>
+            <div id="morphResults" class="results"></div>
+        </div>
+
+        <!-- İSTATİSTİKLER SEKMESİ -->
+        <div id="statistics" class="tab-content">
+            <div class="search-section">
+                <h2>📊 Kuran İstatistikleri</h2>
+                <button onclick="getStatistics()">İstatistikleri Yükle</button>
+            </div>
+            <div id="statsResults" class="results"></div>
+        </div>
+
+        <!-- ÇOKLU MEAL SEKMESİ -->
+        <div id="translations" class="tab-content">
+            <div class="search-section">
+                <h2>🌐 Çoklu Meal Karşılaştırma</h2>
+                <div class="search-group">
+                    <input type="text" id="transSurah" placeholder="Sure No" style="max-width: 150px;">
+                    <input type="text" id="transVerse" placeholder="Ayet No" style="max-width: 150px;">
+                    <button onclick="getMultipleTranslations()">Mealları Getir</button>
+                </div>
+                <div class="filter-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="showDiyanet" checked>
+                        <label>Diyanet</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="showYazir" checked>
+                        <label>Elmalılı</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="showBulac" checked>
+                        <label>Süleyman Ateş</label>
+                    </div>
+                </div>
+            </div>
+            <div id="transResults" class="results"></div>
+        </div>
+
+        <!-- GELİŞMİŞ SEKMESİ -->
+        <div id="advanced" class="tab-content">
+            <div class="search-section">
+                <h2>⚡ Gelişmiş Özellikler</h2>
+                <div class="search-group">
+                    <input type="text" id="advancedQuery" placeholder="Gelişmiş arama sorgusu">
+                    <select id="advancedType">
+                        <option value="regex">Regex Arama</option>
+                        <option value="wildcard">Joker Karakter</option>
+                        <option value="phonetic">Fonetik Arama</option>
+                    </select>
+                    <button onclick="advancedSearch()">Gelişmiş Ara</button>
+                </div>
+            </div>
+            <div id="advancedResults" class="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://kuran-corpus-api-production.up.railway.app';
+        
+        // Sekme değiştirme
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Arama fonksiyonu
+        async function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            const searchType = document.getElementById('searchType').value;
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (!query) {
+                resultsDiv.innerHTML = '<div class="error">Lütfen arama yapmak için bir kelime girin.</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Aranıyor</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/search?query=${encodeURIComponent(query)}&type=${searchType}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySearchResults(data.data.results || data.data);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">${data.message || 'Arama başarısız oldu'}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">Bağlantı hatası oluştu. Lütfen daha sonra tekrar deneyin.</div>';
+            }
+        }
+
+        // Arama sonuçlarını göster
+        function displaySearchResults(results) {
+            const resultsDiv = document.getElementById('searchResults');
+            const showArabic = document.getElementById('showArabic').checked;
+            const showTurkish = document.getElementById('showTurkish').checked;
+            const showMorphology = document.getElementById('showMorphology').checked;
+            
+            if (!results || results.length === 0) {
+                resultsDiv.innerHTML = '<div class="error">Sonuç bulunamadı.</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = `<div class="success">✓ ${results.length} sonuç bulundu</div>`;
+            
+            results.forEach(verse => {
+                const card = document.createElement('div');
+                card.className = 'verse-card';
+                
+                let html = `<div class="verse-reference">${verse.surah_name || 'Sure'} ${verse.reference || verse.verse_number}</div>`;
+                
+                if (showArabic && verse.arabic) {
+                    html += `<div class="verse-arabic">${verse.arabic}</div>`;
+                }
+                
+                if (showTurkish && (verse.turkish || verse.translation)) {
+                    html += `<div class="verse-turkish">${verse.turkish || verse.translation}</div>`;
+                }
+                
+                if (showMorphology && verse.root) {
+                    html += `<div class="word-analysis">
+                        <span class="word-badge">Kök: ${verse.root}</span>
+                        ${verse.lemma ? `<span class="word-badge">Lemma: ${verse.lemma}</span>` : ''}
+                    </div>`;
+                }
+                
+                html += `<div class="verse-meta">
+                    <div class="meta-item">📖 ${verse.type || 'verse'}</div>
+                    ${verse.note ? `<div class="meta-item">ℹ️ ${verse.note}</div>` : ''}
+                </div>`;
+                
+                card.innerHTML = html;
+                resultsDiv.appendChild(card);
+            });
+        }
+
+        // Rastgele ayet getir
+        async function getRandomVerse() {
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = '<div class="loading">Rastgele ayet getiriliyor</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/demo`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySearchResults([data.data.demo_data || data.data]);
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">Ayet getirilemedi.</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">Bağlantı hatası oluştu.</div>';
+            }
+        }
+
+        // Morfolojik analiz
+        async function getMorphology() {
+            const surah = document.getElementById('morphSurah').value;
+            const verse = document.getElementById('morphVerse').value;
+            const resultsDiv = document.getElementById('morphResults');
+            
+            if (!surah || !verse) {
+                resultsDiv.innerHTML = '<div class="error">Lütfen sure ve ayet numarası girin.</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Morfolojik analiz yapılıyor</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/morphology/${surah}/${verse}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayMorphologyResults(data.data);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">${data.message}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">Analiz yapılamadı. Demo mode aktif.</div>';
+            }
+        }
+
+        // Morfoloji sonuçlarını göster
+        function displayMorphologyResults(data) {
+            const resultsDiv = document.getElementById('morphResults');
+            let html = '<div class="verse-card">';
+            html += `<div class="verse-reference">${data.reference}</div>`;
+            html += `<div class="verse-arabic">${data.arabic}</div>`;
+            
+            if (data.segments) {
+                html += '<div class="word-analysis"><h3>Kelime Analizi:</h3>';
+                data.segments.forEach(segment => {
+                    html += `
+                        <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
+                            <strong>${segment.segment}</strong><br>
+                            <span class="word-badge">Kök: ${segment.root}</span>
+                            <span class="word-badge">Tip: ${segment.pos}</span>
+                            ${segment.lemma ? `<span class="word-badge">Lemma: ${segment.lemma}</span>` : ''}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+
+        // İstatistikler
+        async function getStatistics() {
+            const resultsDiv = document.getElementById('statsResults');
+            resultsDiv.innerHTML = '<div class="loading">İstatistikler yükleniyor</div>';
+            
+            const stats = {
+                totalSurahs: 114,
+                totalVerses: 6236,
+                totalWords: 77845,
+                uniqueRoots: 1800,
+                languages: 10
+            };
+            
+            let html = '<div class="stats">';
+            html += `<div class="stat-card"><div class="stat-number">${stats.totalSurahs}</div><div class="stat-label">Sure Sayısı</div></div>`;
+            html += `<div class="stat-card"><div class="stat-number">${stats.totalVerses}</div><div class="stat-label">Toplam Ayet</div></div>`;
+            html += `<div class="stat-card"><div class="stat-number">${stats.totalWords}</div><div class="stat-label">Toplam Kelime</div></div>`;
+            html += `<div class="stat-card"><div class="stat-number">${stats.uniqueRoots}</div><div class="stat-label">Benzersiz Kök</div></div>`;
+            html += `<div class="stat-card"><div class="stat-number">${stats.languages}</div><div class="stat-label">Dil Desteği</div></div>`;
+            html += '</div>';
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // Çoklu meal
+        async function getMultipleTranslations() {
+            const surah = document.getElementById('transSurah').value;
+            const verse = document.getElementById('transVerse').value;
+            const resultsDiv = document.getElementById('transResults');
+            
+            if (!surah || !verse) {
+                resultsDiv.innerHTML = '<div class="error">Lütfen sure ve ayet numarası girin.</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Mealler getiriliyor</div>';
+            
+            const translations = [
+                { name: 'Diyanet İşleri', text: 'Diyanet meal metni buraya gelecek...' },
+                { name: 'Elmalılı Hamdi Yazır', text: 'Elmalılı meal metni buraya gelecek...' },
+                { name: 'Süleyman Ateş', text: 'Süleyman Ateş meal metni buraya gelecek...' }
+            ];
+            
+            let html = '<div class="verse-card">';
+            html += `<div class="verse-reference">Sure ${surah}, Ayet ${verse}</div>`;
+            
+            translations.forEach(trans => {
+                html += `
+                    <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                        <h4 style="color: #667eea; margin-bottom: 10px;">${trans.name}</h4>
+                        <p>${trans.text}</p>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+
+        // Gelişmiş arama
+        async function advancedSearch() {
+            const query = document.getElementById('advancedQuery').value.trim();
+            const type = document.getElementById('advancedType').value;
+            const resultsDiv = document.getElementById('advancedResults');
+            
+            if (!query) {
+                resultsDiv.innerHTML = '<div class="error">Lütfen arama terimi girin.</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Gelişmiş arama yapılıyor</div>';
+            
+            setTimeout(() => {
+                resultsDiv.innerHTML = '<div class="success">Gelişmiş arama özelliği yakında eklenecek! (Demo Mode)</div>';
+            }, 1000);
+        }
+
+        // Enter tuşu ile arama
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') performSearch();
+        });
+        
+        // Sayfa yüklendiğinde demo mesajı
+        window.onload = function() {
+            console.log('🕌 Kuran Corpus API - Gelişmiş Web Arayüzü');
+            console.log('📡 API URL:', API_BASE);
+        };
+    </script>
+</body>
+</html>
