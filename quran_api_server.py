@@ -308,7 +308,7 @@ def get_sura(surah: int):
 def search():
     """Kapsamlı arama - kelime, kök, morfoloji"""
     try:
-        query = request.args.get('q', '').strip()
+        query = request.args.get('q', request.args.get('query', '')).strip()
         search_type = request.args.get('type', 'word').lower()  # word, root, lemma
         limit = min(int(request.args.get('limit', 50)), 500)
         
@@ -317,7 +317,31 @@ def search():
         
         conn = get_db_connection()
         if not conn:
-            return APIResponse.error("Database connection failed", "DB_ERROR", 500)
+            # Database yoksa demo veri döndür
+            demo_results = [
+                {
+                    "reference": "1:1",
+                    "type": "verse",
+                    "arabic": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                    "turkish": "Rahman ve Rahim olan Allah'ın adıyla",
+                    "verse_number": 1,
+                    "surah_name": "Fatiha"
+                },
+                {
+                    "reference": "112:1",
+                    "type": "verse", 
+                    "arabic": "قُلْ هُوَ اللَّهُ أَحَدٌ",
+                    "turkish": "De ki: O, Allah bir tektir",
+                    "verse_number": 1,
+                    "surah_name": "İhlas"
+                }
+            ]
+            return APIResponse.success({
+                "query": query,
+                "results": demo_results,
+                "count": len(demo_results),
+                "note": "Demo mode - Database not available"
+            }, "Demo search results")
         
         cursor = conn.cursor()
         results = []
