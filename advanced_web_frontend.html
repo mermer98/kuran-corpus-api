@@ -409,24 +409,11 @@
         <div id="translations" class="tab-content">
             <div class="search-section">
                 <h2>🌐 Çoklu Meal Karşılaştırma</h2>
+                <p style="margin-bottom: 15px; color: #666;">9 farklı Türkçe meal: Diyanet, Elmalılı, Süleyman Ateş, Ali Bulaç, Gölpınarlı, Y.N. Öztürk, TDV, S. Yıldırım, E. Yüksel</p>
                 <div class="search-group">
-                    <input type="text" id="transSurah" placeholder="Sure No" style="max-width: 150px;">
+                    <input type="text" id="transSurah" placeholder="Sure No (1-114)" style="max-width: 150px;">
                     <input type="text" id="transVerse" placeholder="Ayet No" style="max-width: 150px;">
                     <button onclick="getMultipleTranslations()">Mealları Getir</button>
-                </div>
-                <div class="filter-group">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="showDiyanet" checked>
-                        <label>Diyanet</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="showYazir" checked>
-                        <label>Elmalılı</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="showBulac" checked>
-                        <label>Süleyman Ateş</label>
-                    </div>
                 </div>
             </div>
             <div id="transResults" class="results"></div>
@@ -724,26 +711,36 @@
                 return;
             }
             
-            resultsDiv.innerHTML = '<div class="loading">Ayet getiriliyor</div>';
+            resultsDiv.innerHTML = '<div class="loading">Mealler getiriliyor</div>';
             
             try {
-                const response = await fetch(`${API_BASE}/api/verse/${surah}/${verse}`);
+                const response = await fetch(`${API_BASE}/api/translations/${surah}/${verse}`);
                 const data = await response.json();
                 
                 if (data.status === 'success' || data.success) {
                     let html = '<div class="verse-card">';
                     html += `<div class="verse-reference">${data.data.surah_name} ${data.data.reference}</div>`;
                     html += `<div class="verse-arabic">${data.data.arabic}</div>`;
-                    html += `<div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 10px;">
-                        <h4 style="color: #667eea; margin-bottom: 10px;">Diyanet Meali</h4>
-                        <p>${data.data.turkish}</p>
-                    </div>`;
+                    html += `<div class="success" style="margin: 15px 0;">✓ ${data.data.translation_count} farklı meal bulundu</div>`;
+                    
+                    // Meal renkleri
+                    const colors = ['#667eea', '#764ba2', '#28a745', '#17a2b8', '#dc3545', '#fd7e14', '#6f42c1', '#20c997', '#e83e8c'];
+                    
+                    data.data.translations.forEach((trans, index) => {
+                        const color = colors[index % colors.length];
+                        html += `<div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid ${color};">
+                            <h4 style="color: ${color}; margin-bottom: 10px;">📖 ${trans.name}</h4>
+                            <p style="line-height: 1.8;">${trans.text}</p>
+                        </div>`;
+                    });
+                    
                     html += '</div>';
                     resultsDiv.innerHTML = html;
                 } else {
                     resultsDiv.innerHTML = '<div class="error">Ayet bulunamadı.</div>';
                 }
             } catch (error) {
+                console.error('Translation error:', error);
                 resultsDiv.innerHTML = '<div class="error">Bağlantı hatası.</div>';
             }
         }

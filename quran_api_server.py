@@ -98,6 +98,17 @@ except Exception as e:
     MORPHOLOGY = {}
     print(f"   ⚠ Morfoloji verileri yüklenemedi: {e}")
 
+# Çoklu meal verilerini yükle
+try:
+    multi_trans_path = os.path.join(DATA_DIR, 'data_multi_translations.json')
+    print(f"   Loading: {multi_trans_path}")
+    with open(multi_trans_path, 'r', encoding='utf-8') as f:
+        MULTI_TRANSLATIONS = json.load(f)
+    print(f"   ✓ {len(MULTI_TRANSLATIONS)} farklı meal yüklendi")
+except Exception as e:
+    MULTI_TRANSLATIONS = {}
+    print(f"   ⚠ Çoklu meal verileri yüklenemedi: {e}")
+
 print("✅ Veriler hazır!\n")
 
 # Sure isimlerini hazırla
@@ -421,6 +432,56 @@ def get_morphology(sura, verse):
             "segments": segments,
             "has_morphology": False
         })
+
+# ============================================================================
+# ÇOKLU MEAL ENDPOİNT'İ
+# ============================================================================
+
+@app.route('/api/translations/<int:sura>/<int:verse>')
+@rate_limit
+def get_multi_translations(sura, verse):
+    """Çoklu meal karşılaştırma"""
+    verse_data = get_verse_data(sura, verse)
+    if not verse_data:
+        return APIResponse.error(f"Verse {sura}:{verse} not found", "NOT_FOUND", 404)
+    
+    key = f"{sura}:{verse}"
+    translations_list = []
+    
+    for code, data in MULTI_TRANSLATIONS.items():
+        if key in data.get('verses', {}):
+            translations_list.append({
+                "code": code,
+                "name": data['name'],
+                "short": data['short'],
+                "text": data['verses'][key]
+            })
+    
+    return APIResponse.success({
+        "reference": verse_data['reference'],
+        "surah_name": verse_data['surah_name'],
+        "arabic": verse_data['arabic'],
+        "translation_count": len(translations_list),
+        "translations": translations_list
+    })
+
+@app.route('/api/translations/list')
+@rate_limit
+def list_translations():
+    """Mevcut mealleri listele"""
+    translations_info = []
+    for code, data in MULTI_TRANSLATIONS.items():
+        translations_info.append({
+            "code": code,
+            "name": data['name'],
+            "short": data['short'],
+            "verse_count": len(data.get('verses', {}))
+        })
+    
+    return APIResponse.success({
+        "count": len(translations_info),
+        "translations": translations_info
+    })
 
 # Helper function
 def get_verse_data(sura, verse):
