@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🕌 Kuran Corpus - Gelişmiş Arama</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Kuran Corpus - 6236 ayet, 1642 kök, tam metin arama ve morfolojik analiz">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kuran Corpus">
+    <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Kuran Corpus API&quot;,&quot;short_name&quot;:&quot;Kuran&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%23667eea&quot;,&quot;theme_color&quot;:&quot;%23667eea&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕌</text></svg>&quot;,&quot;sizes&quot;:&quot;any&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕌</text></svg>">
     <style>
         * {
             margin: 0;
@@ -507,6 +516,217 @@
             border: none;
             background: transparent;
         }
+
+        /* Font Boyutu Kontrolü */
+        .font-control {
+            position: fixed;
+            bottom: 200px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+        }
+        .font-control.show {
+            display: block;
+        }
+        .font-control input[type="range"] {
+            width: 120px;
+        }
+        .font-btn {
+            position: fixed;
+            bottom: 200px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #17a2b8;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 999;
+        }
+        body.dark-mode .font-control {
+            background: #252538;
+            color: #e0e0e0;
+        }
+
+        /* Bookmark Göstergesi */
+        .bookmark-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+        }
+        .bookmark-indicator.show {
+            display: block;
+        }
+
+        /* Karşılaştırma Modu */
+        .compare-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .compare-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #667eea;
+        }
+        body.dark-mode .compare-card {
+            background: #252538;
+        }
+        @media (max-width: 768px) {
+            .compare-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Tema Renkleri */
+        body.theme-green {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        body.theme-green .header,
+        body.theme-green .stat-card,
+        body.theme-green .verse-reference,
+        body.theme-green button:not(.action-btn) {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        body.theme-blue {
+            background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+        }
+        body.theme-blue .header,
+        body.theme-blue .stat-card,
+        body.theme-blue .verse-reference,
+        body.theme-blue button:not(.action-btn) {
+            background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+        }
+        body.theme-orange {
+            background: linear-gradient(135deg, #f12711 0%, #f5af19 100%);
+        }
+        body.theme-orange .header,
+        body.theme-orange .stat-card,
+        body.theme-orange .verse-reference,
+        body.theme-orange button:not(.action-btn) {
+            background: linear-gradient(135deg, #f12711 0%, #f5af19 100%);
+        }
+
+        /* Tema Seçici */
+        .theme-picker {
+            position: fixed;
+            bottom: 260px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+        }
+        .theme-picker.show {
+            display: flex;
+            gap: 10px;
+        }
+        .theme-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .theme-dot:hover {
+            transform: scale(1.2);
+        }
+        .theme-dot.active {
+            border-color: #333;
+        }
+        .theme-dot.purple { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .theme-dot.green { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .theme-dot.blue { background: linear-gradient(135deg, #2193b0, #6dd5ed); }
+        .theme-dot.orange { background: linear-gradient(135deg, #f12711, #f5af19); }
+        body.dark-mode .theme-picker {
+            background: #252538;
+        }
+
+        /* Klavye Kısayolları Panel */
+        .shortcuts-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            z-index: 2000;
+            display: none;
+            max-width: 400px;
+        }
+        .shortcuts-panel.show {
+            display: block;
+        }
+        .shortcuts-panel h3 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+        .shortcut-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .shortcut-key {
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        body.dark-mode .shortcuts-panel {
+            background: #1e1e2f;
+            color: #e0e0e0;
+        }
+
+        /* Telegram Butonu */
+        .action-btn.telegram {
+            background: #0088cc;
+            color: white;
+        }
+
+        /* Yazdırma Stilleri */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+            }
+            .container {
+                box-shadow: none !important;
+            }
+            .tabs, .theme-toggle, .favorites-badge, .font-btn, .font-control, .theme-picker, .bookmark-indicator, .toast, .action-buttons, .search-section button {
+                display: none !important;
+            }
+            .verse-card {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            .verse-arabic {
+                font-size: 24px !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -525,6 +745,8 @@
             <button class="tab" onclick="switchTab('frequency')">🔢 Frekans</button>
             <button class="tab" onclick="switchTab('favorites')">⭐ Favoriler</button>
             <button class="tab" onclick="switchTab('reading')">📖 Sure Oku</button>
+            <button class="tab" onclick="switchTab('compare')">🔗 Karşılaştır</button>
+            <button class="tab" onclick="switchTab('settings')">⚙️ Ayarlar</button>
         </div>
 
         <!-- ARAMA SEKMESİ -->
@@ -649,9 +871,75 @@
                     </select>
                     <button onclick="loadFullSura()">Sureyi Yükle</button>
                     <button onclick="toggleReadingMode()" id="readingModeBtn">📚 Okuma Modu</button>
+                    <button onclick="printSura()" style="background: #6c757d;">🖨️ Yazdır</button>
                 </div>
             </div>
             <div id="readingResults" class="results"></div>
+        </div>
+
+        <!-- KARŞILAŞTIRMA SEKMESİ -->
+        <div id="compare" class="tab-content">
+            <div class="search-section">
+                <h2>🔗 Ayet Karşılaştırma</h2>
+                <p style="margin-bottom: 15px; color: #666;">İki ayeti yan yana karşılaştırın.</p>
+                <div class="compare-container">
+                    <div>
+                        <h4>1. Ayet</h4>
+                        <div class="search-group">
+                            <input type="text" id="compare1Surah" placeholder="Sure" style="max-width: 80px;">
+                            <input type="text" id="compare1Verse" placeholder="Ayet" style="max-width: 80px;">
+                        </div>
+                    </div>
+                    <div>
+                        <h4>2. Ayet</h4>
+                        <div class="search-group">
+                            <input type="text" id="compare2Surah" placeholder="Sure" style="max-width: 80px;">
+                            <input type="text" id="compare2Verse" placeholder="Ayet" style="max-width: 80px;">
+                        </div>
+                    </div>
+                </div>
+                <button onclick="compareVerses()" style="margin-top: 15px;">Karşılaştır</button>
+            </div>
+            <div id="compareResults" class="results"></div>
+        </div>
+
+        <!-- AYARLAR SEKMESİ -->
+        <div id="settings" class="tab-content">
+            <div class="search-section">
+                <h2>⚙️ Ayarlar</h2>
+                
+                <div style="margin: 20px 0; padding: 20px; background: white; border-radius: 10px;">
+                    <h4>📏 Arapça Font Boyutu</h4>
+                    <input type="range" id="fontSizeSlider" min="18" max="48" value="28" style="width: 100%; margin: 10px 0;">
+                    <span id="fontSizeDisplay">28px</span>
+                </div>
+                
+                <div style="margin: 20px 0; padding: 20px; background: white; border-radius: 10px;">
+                    <h4>🎨 Tema Rengi</h4>
+                    <div style="display: flex; gap: 15px; margin-top: 10px;">
+                        <div class="theme-dot purple active" onclick="setTheme('purple')" title="Mor"></div>
+                        <div class="theme-dot green" onclick="setTheme('green')" title="Yeşil"></div>
+                        <div class="theme-dot blue" onclick="setTheme('blue')" title="Mavi"></div>
+                        <div class="theme-dot orange" onclick="setTheme('orange')" title="Turuncu"></div>
+                    </div>
+                </div>
+                
+                <div style="margin: 20px 0; padding: 20px; background: white; border-radius: 10px;">
+                    <h4>⌨️ Klavye Kısayolları</h4>
+                    <div class="shortcut-row"><span>Arama</span><span class="shortcut-key">Ctrl + F</span></div>
+                    <div class="shortcut-row"><span>Rastgele Ayet</span><span class="shortcut-key">Ctrl + R</span></div>
+                    <div class="shortcut-row"><span>Karanlık Mod</span><span class="shortcut-key">Ctrl + D</span></div>
+                    <div class="shortcut-row"><span>Favoriler</span><span class="shortcut-key">Ctrl + B</span></div>
+                    <div class="shortcut-row"><span>Yardım</span><span class="shortcut-key">?</span></div>
+                </div>
+                
+                <div style="margin: 20px 0; padding: 20px; background: white; border-radius: 10px;">
+                    <h4>🔖 Son Okunan</h4>
+                    <p id="lastReadDisplay" style="color: #666;">Henüz kayıt yok</p>
+                    <button onclick="goToLastRead()" style="margin-top: 10px;">Kaldığım Yere Git</button>
+                    <button onclick="clearBookmark()" style="background: #dc3545; margin-top: 10px;">Sil</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -663,6 +951,20 @@
     
     <!-- Toast Notification -->
     <div class="toast" id="toast"></div>
+    
+    <!-- Bookmark Indicator -->
+    <div class="bookmark-indicator" id="bookmarkIndicator" onclick="goToLastRead()">🔖 Kaldığın yer</div>
+    
+    <!-- Shortcuts Panel -->
+    <div class="shortcuts-panel" id="shortcutsPanel">
+        <h3>⌨️ Klavye Kısayolları</h3>
+        <div class="shortcut-row"><span>Arama</span><span class="shortcut-key">Ctrl + F</span></div>
+        <div class="shortcut-row"><span>Rastgele Ayet</span><span class="shortcut-key">Ctrl + R</span></div>
+        <div class="shortcut-row"><span>Karanlık Mod</span><span class="shortcut-key">Ctrl + D</span></div>
+        <div class="shortcut-row"><span>Favoriler</span><span class="shortcut-key">Ctrl + B</span></div>
+        <div class="shortcut-row"><span>Bu Paneli Kapat</span><span class="shortcut-key">ESC</span></div>
+        <button onclick="document.getElementById('shortcutsPanel').classList.remove('show')" style="margin-top: 20px; width: 100%;">Kapat</button>
+    </div>
 
     <script>
         const API_BASE = 'https://kuran-corpus-api.onrender.com';
@@ -760,6 +1062,8 @@
                     <button class="action-btn copy" onclick="copyVerse(\`${arabicEsc}\`, \`${turkishEsc}\`, '${ref}')">📋</button>
                     <button class="action-btn whatsapp" onclick="shareWhatsApp(\`${arabicEsc}\`, \`${turkishEsc}\`, '${ref}')">📱</button>
                     <button class="action-btn twitter" onclick="shareTwitter(\`${arabicEsc}\`, \`${turkishEsc}\`, '${ref}')">𝕏</button>
+                    <button class="action-btn telegram" onclick="shareTelegram(\`${arabicEsc}\`, \`${turkishEsc}\`, '${ref}')">✈️</button>
+                    <button class="action-btn" style="background:#6c757d;" onclick="printVerse(\`${arabicEsc}\`, \`${turkishEsc}\`, '${ref}')">🖨️</button>
                 </div>`;
                 
                 card.innerHTML = html;
@@ -1249,6 +1553,44 @@
             window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
         }
 
+        // Telegram paylaşım
+        function shareTelegram(arabic, turkish, reference) {
+            const text = encodeURIComponent(`${reference}\n\n${arabic}\n\n${turkish}\n\n— Kuran Corpus`);
+            window.open(`https://t.me/share/url?url=&text=${text}`, '_blank');
+        }
+
+        // Yazdır fonksiyonu
+        function printVerse(arabic, turkish, reference) {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>${reference} - Kuran Corpus</title>
+                    <style>
+                        body { font-family: 'Segoe UI', sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+                        .ref { color: #667eea; font-weight: bold; font-size: 1.2em; margin-bottom: 20px; }
+                        .arabic { font-family: 'Traditional Arabic', serif; font-size: 32px; line-height: 2; text-align: right; direction: rtl; margin: 20px 0; padding: 20px; border-right: 4px solid #667eea; }
+                        .turkish { font-size: 18px; line-height: 1.8; margin: 20px 0; padding: 20px; border-left: 4px solid #764ba2; }
+                        .footer { margin-top: 30px; color: #666; font-size: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="ref">${reference}</div>
+                    <div class="arabic">${arabic}</div>
+                    <div class="turkish">${turkish}</div>
+                    <div class="footer">Kuran Corpus API - ${new Date().toLocaleDateString('tr-TR')}</div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Sure yazdır
+        function printSura() {
+            window.print();
+        }
+
         // Toast notification
         function showToast(message) {
             const toast = document.getElementById('toast');
@@ -1314,12 +1656,14 @@
                     
                     data.data.verses.forEach(v => {
                         const isFav = isFavorite(v.reference);
+                        const parts = v.reference.split(':');
                         html += `<div class="verse-card">
                             <div class="verse-reference">${v.reference}</div>
                             <div class="verse-arabic">${v.arabic}</div>
                             <div class="verse-turkish">${v.turkish}</div>
                             <div class="action-buttons">
                                 <button class="action-btn favorite ${isFav ? 'active' : ''}" onclick="toggleFavorite('${v.reference}', \`${v.arabic.replace(/`/g, "'")}\`, \`${v.turkish.replace(/`/g, "'")}\`); this.classList.toggle('active');">${isFav ? '❤️ Favoride' : '⭐ Favorile'}</button>
+                                <button class="action-btn" style="background:#28a745;" onclick="saveBookmark('${v.reference}', ${suraNum}, ${parts[1] || 1})">🔖 İşaretle</button>
                                 <button class="action-btn copy" onclick="copyVerse(\`${v.arabic.replace(/`/g, "'")}\`, \`${v.turkish.replace(/`/g, "'")}\`, '${v.reference}')">📋 Kopyala</button>
                                 <button class="action-btn whatsapp" onclick="shareWhatsApp(\`${v.arabic.replace(/`/g, "'")}\`, \`${v.turkish.replace(/`/g, "'")}\`, '${v.reference}')">📱 WhatsApp</button>
                             </div>
@@ -1354,12 +1698,196 @@
                 document.querySelector('.theme-toggle').textContent = '☀️';
             }
             
+            // Tema rengi kontrolü
+            const savedTheme = localStorage.getItem('themeColor');
+            if (savedTheme) setTheme(savedTheme, false);
+            
+            // Font boyutu kontrolü
+            const savedFontSize = localStorage.getItem('arabicFontSize');
+            if (savedFontSize) {
+                document.getElementById('fontSizeSlider').value = savedFontSize;
+                document.getElementById('fontSizeDisplay').textContent = savedFontSize + 'px';
+                updateArabicFontSize(savedFontSize);
+            }
+            
             // Sure listesi yükle
             loadSuraList();
             
             // Favori sayısını güncelle
             updateFavCount();
+            
+            // Bookmark kontrolü
+            checkBookmark();
+            
+            // Son okunan göster
+            updateLastReadDisplay();
         };
+
+        // ===== YENİ 8 ÖZELLİK =====
+
+        // 1. Font Boyutu Kontrolü
+        document.getElementById('fontSizeSlider')?.addEventListener('input', function(e) {
+            const size = e.target.value;
+            document.getElementById('fontSizeDisplay').textContent = size + 'px';
+            updateArabicFontSize(size);
+            localStorage.setItem('arabicFontSize', size);
+        });
+
+        function updateArabicFontSize(size) {
+            document.querySelectorAll('.verse-arabic').forEach(el => {
+                el.style.fontSize = size + 'px';
+            });
+        }
+
+        // 2. Bookmark (Kaldığın Yer)
+        let lastRead = JSON.parse(localStorage.getItem('quran_lastread') || 'null');
+
+        function saveBookmark(reference, surah, verse) {
+            lastRead = { reference, surah, verse, date: new Date().toISOString() };
+            localStorage.setItem('quran_lastread', JSON.stringify(lastRead));
+            showToast('🔖 Yer işareti kaydedildi');
+            checkBookmark();
+            updateLastReadDisplay();
+        }
+
+        function checkBookmark() {
+            const indicator = document.getElementById('bookmarkIndicator');
+            if (lastRead) {
+                indicator.classList.add('show');
+                indicator.innerHTML = `🔖 ${lastRead.reference}`;
+            }
+        }
+
+        function goToLastRead() {
+            if (!lastRead) {
+                showToast('❌ Kayıtlı yer işareti yok');
+                return;
+            }
+            // Sure seç ve yükle
+            document.getElementById('suraSelect').value = lastRead.surah;
+            document.querySelectorAll('.tab')[7].click(); // Sure Oku sekmesi
+            loadFullSura();
+            showToast(`📖 ${lastRead.reference} yükleniyor...`);
+        }
+
+        function clearBookmark() {
+            lastRead = null;
+            localStorage.removeItem('quran_lastread');
+            document.getElementById('bookmarkIndicator').classList.remove('show');
+            updateLastReadDisplay();
+            showToast('🗑️ Yer işareti silindi');
+        }
+
+        function updateLastReadDisplay() {
+            const display = document.getElementById('lastReadDisplay');
+            if (display) {
+                if (lastRead) {
+                    const date = new Date(lastRead.date).toLocaleDateString('tr-TR');
+                    display.innerHTML = `<strong>${lastRead.reference}</strong><br><small>${date}</small>`;
+                } else {
+                    display.textContent = 'Henüz kayıt yok';
+                }
+            }
+        }
+
+        // 3. Ayet Karşılaştırma
+        async function compareVerses() {
+            const s1 = document.getElementById('compare1Surah').value;
+            const v1 = document.getElementById('compare1Verse').value;
+            const s2 = document.getElementById('compare2Surah').value;
+            const v2 = document.getElementById('compare2Verse').value;
+            const resultsDiv = document.getElementById('compareResults');
+            
+            if (!s1 || !v1 || !s2 || !v2) {
+                resultsDiv.innerHTML = '<div class="error">Lütfen her iki ayet için sure ve ayet numarası girin.</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Ayetler karşılaştırılıyor</div>';
+            
+            try {
+                const [res1, res2] = await Promise.all([
+                    fetch(`${API_BASE}/api/verse/${s1}/${v1}`).then(r => r.json()),
+                    fetch(`${API_BASE}/api/verse/${s2}/${v2}`).then(r => r.json())
+                ]);
+                
+                if (res1.status === 'success' && res2.status === 'success') {
+                    const d1 = res1.data, d2 = res2.data;
+                    resultsDiv.innerHTML = `
+                        <div class="compare-container">
+                            <div class="compare-card">
+                                <div class="verse-reference">${d1.surah_name} ${d1.reference}</div>
+                                <div class="verse-arabic">${d1.arabic}</div>
+                                <div class="verse-turkish">${d1.turkish}</div>
+                            </div>
+                            <div class="compare-card">
+                                <div class="verse-reference">${d2.surah_name} ${d2.reference}</div>
+                                <div class="verse-arabic">${d2.arabic}</div>
+                                <div class="verse-turkish">${d2.turkish}</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">Bir veya her iki ayet bulunamadı.</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">Bağlantı hatası.</div>';
+            }
+        }
+
+        // 4. Tema Rengi
+        function setTheme(theme, save = true) {
+            document.body.classList.remove('theme-green', 'theme-blue', 'theme-orange');
+            document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+            
+            if (theme !== 'purple') {
+                document.body.classList.add('theme-' + theme);
+            }
+            
+            document.querySelector(`.theme-dot.${theme}`)?.classList.add('active');
+            
+            if (save) {
+                localStorage.setItem('themeColor', theme);
+                showToast(`🎨 Tema değiştirildi: ${theme}`);
+            }
+        }
+
+        // 5. Klavye Kısayolları
+        document.addEventListener('keydown', function(e) {
+            // ESC - paneli kapat
+            if (e.key === 'Escape') {
+                document.getElementById('shortcutsPanel').classList.remove('show');
+            }
+            
+            // ? - yardım paneli
+            if (e.key === '?' && !e.ctrlKey) {
+                document.getElementById('shortcutsPanel').classList.toggle('show');
+            }
+            
+            // Ctrl kombinasyonları
+            if (e.ctrlKey) {
+                switch(e.key.toLowerCase()) {
+                    case 'f':
+                        e.preventDefault();
+                        document.querySelectorAll('.tab')[0].click();
+                        document.getElementById('searchInput').focus();
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        getRandomVerse();
+                        break;
+                    case 'd':
+                        e.preventDefault();
+                        toggleDarkMode();
+                        break;
+                    case 'b':
+                        e.preventDefault();
+                        document.querySelectorAll('.tab')[6].click(); // Favoriler
+                        loadFavorites();
+                        break;
+                }
+            }
+        });
     </script>
 </body>
 </html>
