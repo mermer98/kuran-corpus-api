@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: kuran-corpus-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python quran_api_server.py
+    envVars:
+      - key: PORT
+        value: 10000
