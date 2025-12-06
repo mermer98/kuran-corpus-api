@@ -337,8 +337,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🕌 Kuran Corpus - Gelişmiş Arama <span class="demo-badge">DEMO MODE</span></h1>
-            <p>Kuran'da kelime, kök ve morfolojik analiz ile gelişmiş arama yapın</p>
+            <h1>🕌 Kuran Corpus - Gelişmiş Arama</h1>
+            <p>6236 ayet, 1642 kök, tam metin arama ve morfolojik analiz</p>
         </div>
 
         <div class="tabs">
@@ -451,7 +451,7 @@
     </div>
 
     <script>
-        const API_BASE = 'https://kuran-corpus-api-production.up.railway.app';
+        const API_BASE = 'https://kuran-corpus-api.onrender.com';
         
         // Sekme değiştirme
         function switchTab(tabName) {
@@ -479,12 +479,19 @@
                 const response = await fetch(`${API_BASE}/api/search?query=${encodeURIComponent(query)}&type=${searchType}`);
                 const data = await response.json();
                 
-                if (data.success) {
-                    displaySearchResults(data.data.results || data.data);
+                // API status: "success" döndürüyor (success değil status kontrol et)
+                if (data.status === 'success' || data.success) {
+                    const results = data.data?.results || data.data || [];
+                    if (results.length > 0) {
+                        displaySearchResults(results);
+                    } else {
+                        resultsDiv.innerHTML = '<div class="error">Sonuç bulunamadı.</div>';
+                    }
                 } else {
                     resultsDiv.innerHTML = `<div class="error">${data.message || 'Arama başarısız oldu'}</div>`;
                 }
             } catch (error) {
+                console.error('Search error:', error);
                 resultsDiv.innerHTML = '<div class="error">Bağlantı hatası oluştu. Lütfen daha sonra tekrar deneyin.</div>';
             }
         }
@@ -540,11 +547,11 @@
             resultsDiv.innerHTML = '<div class="loading">Rastgele ayet getiriliyor</div>';
             
             try {
-                const response = await fetch(`${API_BASE}/api/demo`);
+                const response = await fetch(`${API_BASE}/api/random`);
                 const data = await response.json();
                 
-                if (data.success) {
-                    displaySearchResults([data.data.demo_data || data.data]);
+                if (data.status === 'success' || data.success) {
+                    displaySearchResults([data.data]);
                 } else {
                     resultsDiv.innerHTML = '<div class="error">Ayet getirilemedi.</div>';
                 }
@@ -570,13 +577,31 @@
                 const response = await fetch(`${API_BASE}/api/morphology/${surah}/${verse}`);
                 const data = await response.json();
                 
-                if (data.success) {
+                if (data.status === 'success' || data.success) {
                     displayMorphologyResults(data.data);
                 } else {
-                    resultsDiv.innerHTML = `<div class="error">${data.message}</div>`;
+                    // Morfoloji endpoint yoksa, basit ayet görüntüleme yap
+                    const verseResponse = await fetch(`${API_BASE}/api/verse/${surah}/${verse}`);
+                    const verseData = await verseResponse.json();
+                    if (verseData.status === 'success') {
+                        const v = verseData.data;
+                        const words = v.arabic.split(' ');
+                        resultsDiv.innerHTML = `
+                            <div class="verse-card">
+                                <div class="verse-reference">${v.surah_name} ${v.reference}</div>
+                                <div class="verse-arabic">${v.arabic}</div>
+                                <div class="verse-turkish">${v.turkish}</div>
+                                <div class="word-analysis">
+                                    <h3>📝 Kelimeler (${words.length} kelime):</h3>
+                                    ${words.map((w, i) => `<span class="word-badge" style="font-size: 1.2em;">${w}</span>`).join('')}
+                                </div>
+                            </div>`;
+                    } else {
+                        resultsDiv.innerHTML = `<div class="error">${data.message || 'Ayet bulunamadı'}</div>`;
+                    }
                 }
             } catch (error) {
-                resultsDiv.innerHTML = '<div class="error">Analiz yapılamadı. Demo mode aktif.</div>';
+                resultsDiv.innerHTML = '<div class="error">Morfolojik analiz şu an kullanılamıyor. Lütfen daha sonra tekrar deneyin.</div>';
             }
         }
 
@@ -584,22 +609,29 @@
         function displayMorphologyResults(data) {
             const resultsDiv = document.getElementById('morphResults');
             let html = '<div class="verse-card">';
-            html += `<div class="verse-reference">${data.reference}</div>`;
+            html += `<div class="verse-reference">${data.surah_name || ''} ${data.reference}</div>`;
             html += `<div class="verse-arabic">${data.arabic}</div>`;
+            if (data.turkish) {
+                html += `<div class="verse-turkish">${data.turkish}</div>`;
+            }
             
             if (data.segments) {
-                html += '<div class="word-analysis"><h3>Kelime Analizi:</h3>';
+                html += `<div class="word-analysis"><h3>📝 Kelime Analizi (${data.word_count} kelime):</h3>`;
+                html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 15px;">';
                 data.segments.forEach(segment => {
+                    const posDisplay = segment.pos_display || segment.pos;
                     html += `
-                        <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
-                            <strong>${segment.segment}</strong><br>
-                            <span class="word-badge">Kök: ${segment.root}</span>
-                            <span class="word-badge">Tip: ${segment.pos}</span>
-                            ${segment.lemma ? `<span class="word-badge">Lemma: ${segment.lemma}</span>` : ''}
+                        <div style="padding: 15px; background: white; border-radius: 10px; border-left: 4px solid #667eea; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            <div style="font-family: 'Traditional Arabic', serif; font-size: 24px; color: #2c3e50; margin-bottom: 10px; text-align: right;">${segment.segment}</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                <span class="word-badge" style="background: #28a745;">Kök: ${segment.root}</span>
+                                <span class="word-badge" style="background: #17a2b8;">Tip: ${posDisplay}</span>
+                                ${segment.lemma ? `<span class="word-badge" style="background: #6f42c1;">Lemma: ${segment.lemma}</span>` : ''}
+                            </div>
                         </div>
                     `;
                 });
-                html += '</div>';
+                html += '</div></div>';
             }
             
             html += '</div>';
@@ -611,23 +643,74 @@
             const resultsDiv = document.getElementById('statsResults');
             resultsDiv.innerHTML = '<div class="loading">İstatistikler yükleniyor</div>';
             
-            const stats = {
-                totalSurahs: 114,
-                totalVerses: 6236,
-                totalWords: 77845,
-                uniqueRoots: 1800,
-                languages: 10
-            };
+            try {
+                const response = await fetch(`${API_BASE}/api/stats`);
+                const data = await response.json();
+                
+                if (data.status === 'success' || data.success) {
+                    const stats = data.data;
+                    let html = '<div class="stats">';
+                    html += `<div class="stat-card"><div class="stat-number">${stats.total_suras || 114}</div><div class="stat-label">Sure Sayısı</div></div>`;
+                    html += `<div class="stat-card"><div class="stat-number">${stats.total_verses || 6236}</div><div class="stat-label">Toplam Ayet</div></div>`;
+                    html += `<div class="stat-card"><div class="stat-number">${stats.total_words || 77845}</div><div class="stat-label">Toplam Kelime</div></div>`;
+                    html += `<div class="stat-card"><div class="stat-number">${stats.unique_roots || 1642}</div><div class="stat-label">Benzersiz Kök</div></div>`;
+                    html += '</div>';
+                    
+                    // Sure listesi
+                    if (stats.suras && stats.suras.length > 0) {
+                        html += '<h3 style="margin: 20px 0 10px;">📖 Sureler</h3>';
+                        html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">';
+                        stats.suras.forEach(s => {
+                            html += `<div style="padding: 10px; background: #f8f9fa; border-radius: 8px; cursor: pointer;" onclick="loadSura(${s.n})">
+                                <strong>${s.n}. ${s.name}</strong> <span style="color: #666;">(${s.vc} ayet)</span>
+                            </div>`;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    throw new Error('API error');
+                }
+            } catch (error) {
+                // Fallback
+                const stats = { totalSurahs: 114, totalVerses: 6236, totalWords: 77845, uniqueRoots: 1642 };
+                let html = '<div class="stats">';
+                html += `<div class="stat-card"><div class="stat-number">${stats.totalSurahs}</div><div class="stat-label">Sure Sayısı</div></div>`;
+                html += `<div class="stat-card"><div class="stat-number">${stats.totalVerses}</div><div class="stat-label">Toplam Ayet</div></div>`;
+                html += `<div class="stat-card"><div class="stat-number">${stats.totalWords}</div><div class="stat-label">Toplam Kelime</div></div>`;
+                html += `<div class="stat-card"><div class="stat-number">${stats.uniqueRoots}</div><div class="stat-label">Benzersiz Kök</div></div>`;
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+            }
+        }
+        
+        // Sure yükle
+        async function loadSura(suraNum) {
+            const resultsDiv = document.getElementById('statsResults');
+            resultsDiv.innerHTML = '<div class="loading">Sure yükleniyor</div>';
             
-            let html = '<div class="stats">';
-            html += `<div class="stat-card"><div class="stat-number">${stats.totalSurahs}</div><div class="stat-label">Sure Sayısı</div></div>`;
-            html += `<div class="stat-card"><div class="stat-number">${stats.totalVerses}</div><div class="stat-label">Toplam Ayet</div></div>`;
-            html += `<div class="stat-card"><div class="stat-number">${stats.totalWords}</div><div class="stat-label">Toplam Kelime</div></div>`;
-            html += `<div class="stat-card"><div class="stat-number">${stats.uniqueRoots}</div><div class="stat-label">Benzersiz Kök</div></div>`;
-            html += `<div class="stat-card"><div class="stat-number">${stats.languages}</div><div class="stat-label">Dil Desteği</div></div>`;
-            html += '</div>';
-            
-            resultsDiv.innerHTML = html;
+            try {
+                const response = await fetch(`${API_BASE}/api/sura/${suraNum}`);
+                const data = await response.json();
+                
+                if (data.status === 'success' || data.success) {
+                    let html = `<h2 style="margin-bottom: 20px;">${suraNum}. ${data.data.name} (${data.data.verse_count} ayet)</h2>`;
+                    html += '<button onclick="getStatistics()" style="margin-bottom: 20px;">← Geri</button>';
+                    
+                    data.data.verses.forEach(v => {
+                        html += `<div class="verse-card">
+                            <div class="verse-reference">${v.reference}</div>
+                            <div class="verse-arabic">${v.arabic}</div>
+                            <div class="verse-turkish">${v.turkish}</div>
+                        </div>`;
+                    });
+                    
+                    resultsDiv.innerHTML = html;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">Sure yüklenemedi.</div>';
+            }
         }
 
         // Çoklu meal
@@ -641,31 +724,31 @@
                 return;
             }
             
-            resultsDiv.innerHTML = '<div class="loading">Mealler getiriliyor</div>';
+            resultsDiv.innerHTML = '<div class="loading">Ayet getiriliyor</div>';
             
-            const translations = [
-                { name: 'Diyanet İşleri', text: 'Diyanet meal metni buraya gelecek...' },
-                { name: 'Elmalılı Hamdi Yazır', text: 'Elmalılı meal metni buraya gelecek...' },
-                { name: 'Süleyman Ateş', text: 'Süleyman Ateş meal metni buraya gelecek...' }
-            ];
-            
-            let html = '<div class="verse-card">';
-            html += `<div class="verse-reference">Sure ${surah}, Ayet ${verse}</div>`;
-            
-            translations.forEach(trans => {
-                html += `
-                    <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 10px;">
-                        <h4 style="color: #667eea; margin-bottom: 10px;">${trans.name}</h4>
-                        <p>${trans.text}</p>
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            resultsDiv.innerHTML = html;
+            try {
+                const response = await fetch(`${API_BASE}/api/verse/${surah}/${verse}`);
+                const data = await response.json();
+                
+                if (data.status === 'success' || data.success) {
+                    let html = '<div class="verse-card">';
+                    html += `<div class="verse-reference">${data.data.surah_name} ${data.data.reference}</div>`;
+                    html += `<div class="verse-arabic">${data.data.arabic}</div>`;
+                    html += `<div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                        <h4 style="color: #667eea; margin-bottom: 10px;">Diyanet Meali</h4>
+                        <p>${data.data.turkish}</p>
+                    </div>`;
+                    html += '</div>';
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">Ayet bulunamadı.</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">Bağlantı hatası.</div>';
+            }
         }
 
-        // Gelişmiş arama
+        // Gelişmiş arama - kök araması
         async function advancedSearch() {
             const query = document.getElementById('advancedQuery').value.trim();
             const type = document.getElementById('advancedType').value;
@@ -676,11 +759,28 @@
                 return;
             }
             
-            resultsDiv.innerHTML = '<div class="loading">Gelişmiş arama yapılıyor</div>';
+            resultsDiv.innerHTML = '<div class="loading">Kök araması yapılıyor</div>';
             
-            setTimeout(() => {
-                resultsDiv.innerHTML = '<div class="success">Gelişmiş arama özelliği yakında eklenecek! (Demo Mode)</div>';
-            }, 1000);
+            try {
+                const response = await fetch(`${API_BASE}/api/root/${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                if (data.status === 'success' || data.success) {
+                    let html = `<div class="success">✓ "${query}" kökü için ${data.data.count} ayet bulundu</div>`;
+                    data.data.verses.forEach(v => {
+                        html += `<div class="verse-card">
+                            <div class="verse-reference">${v.surah_name} ${v.reference}</div>
+                            <div class="verse-arabic">${v.arabic}</div>
+                            <div class="verse-turkish">${v.turkish}</div>
+                        </div>`;
+                    });
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">Kök bulunamadı: ${query}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">Arama yapılamadı.</div>';
+            }
         }
 
         // Enter tuşu ile arama
@@ -688,7 +788,7 @@
             if (e.key === 'Enter') performSearch();
         });
         
-        // Sayfa yüklendiğinde demo mesajı
+        // Sayfa yüklendiğinde
         window.onload = function() {
             console.log('🕌 Kuran Corpus API - Gelişmiş Web Arayüzü');
             console.log('📡 API URL:', API_BASE);
