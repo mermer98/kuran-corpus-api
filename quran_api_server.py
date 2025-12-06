@@ -87,6 +87,17 @@ except Exception as e:
     ROOT_INDEX = {}
     print(f"   ⚠ Kök verileri yüklenemedi: {e}")
 
+# Morfoloji verilerini yükle
+try:
+    morph_path = os.path.join(DATA_DIR, 'data_morphology_compact.json')
+    print(f"   Loading: {morph_path}")
+    with open(morph_path, 'r', encoding='utf-8') as f:
+        MORPHOLOGY = json.load(f)
+    print(f"   ✓ {len(MORPHOLOGY)} ayet için morfoloji yüklendi")
+except Exception as e:
+    MORPHOLOGY = {}
+    print(f"   ⚠ Morfoloji verileri yüklenemedi: {e}")
+
 print("✅ Veriler hazır!\n")
 
 # Sure isimlerini hazırla
@@ -329,34 +340,63 @@ def list_suras():
 @app.route('/api/morphology/<int:sura>/<int:verse>')
 @rate_limit
 def get_morphology(sura, verse):
-    """Morfolojik analiz - basit versiyon"""
+    """Morfolojik analiz - gerçek verilerle"""
     verse_data = get_verse_data(sura, verse)
     if not verse_data:
         return APIResponse.error(f"Verse {sura}:{verse} not found", "NOT_FOUND", 404)
     
-    # Arapça metni kelimelere ayır
+    key = f"{sura}:{verse}"
     arabic_text = verse_data['arabic']
-    words = arabic_text.split()
+    arabic_words = arabic_text.split()
     
-    # Basit morfolojik analiz (gerçek analiz için morphology.db gerekir)
-    segments = []
-    for i, word in enumerate(words):
-        segments.append({
-            "position": i + 1,
-            "segment": word,
-            "root": "—",  # Kök bilgisi için ayrı DB gerekli
-            "pos": "WORD",
-            "lemma": word
+    # Morfoloji verisini kontrol et
+    if key in MORPHOLOGY:
+        morph_data = MORPHOLOGY[key]
+        segments = []
+        
+        for i, word_info in enumerate(morph_data):
+            # Arapça kelimeyi orijinal metinden al (daha okunabilir)
+            arabic_word = arabic_words[i] if i < len(arabic_words) else word_info.get('w', '')
+            
+            segments.append({
+                "position": i + 1,
+                "segment": arabic_word,
+                "buckwalter": word_info.get('w', ''),
+                "root": word_info.get('r', '—'),
+                "lemma": word_info.get('l', ''),
+                "pos": word_info.get('p', 'WORD')
+            })
+        
+        return APIResponse.success({
+            "reference": verse_data['reference'],
+            "surah_name": verse_data['surah_name'],
+            "arabic": arabic_text,
+            "turkish": verse_data['turkish'],
+            "word_count": len(segments),
+            "segments": segments,
+            "has_morphology": True
         })
-    
-    return APIResponse.success({
-        "reference": verse_data['reference'],
-        "surah_name": verse_data['surah_name'],
-        "arabic": arabic_text,
-        "turkish": verse_data['turkish'],
-        "word_count": len(words),
-        "segments": segments
-    })
+    else:
+        # Morfoloji verisi yoksa basit ayrıştırma
+        segments = []
+        for i, word in enumerate(arabic_words):
+            segments.append({
+                "position": i + 1,
+                "segment": word,
+                "root": "—",
+                "pos": "WORD",
+                "lemma": word
+            })
+        
+        return APIResponse.success({
+            "reference": verse_data['reference'],
+            "surah_name": verse_data['surah_name'],
+            "arabic": arabic_text,
+            "turkish": verse_data['turkish'],
+            "word_count": len(segments),
+            "segments": segments,
+            "has_morphology": False
+        })
 
 # Helper function
 def get_verse_data(sura, verse):
