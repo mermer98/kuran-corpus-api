@@ -332,6 +332,181 @@
             font-weight: bold;
             margin-left: 10px;
         }
+
+        /* Karanlık Mod */
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        body.dark-mode .container {
+            background: #1e1e2f;
+            color: #e0e0e0;
+        }
+        body.dark-mode .header {
+            background: linear-gradient(135deg, #2d2d44 0%, #1a1a2e 100%);
+        }
+        body.dark-mode .tabs {
+            background: #252538;
+            border-color: #3a3a4a;
+        }
+        body.dark-mode .tab {
+            color: #aaa;
+        }
+        body.dark-mode .tab:hover {
+            background: #3a3a4a;
+        }
+        body.dark-mode .tab.active {
+            background: #1e1e2f;
+            color: #667eea;
+        }
+        body.dark-mode .search-section {
+            background: #252538;
+        }
+        body.dark-mode input[type="text"], body.dark-mode select {
+            background: #1e1e2f;
+            border-color: #3a3a4a;
+            color: #e0e0e0;
+        }
+        body.dark-mode .verse-card {
+            background: #252538;
+            border-color: #3a3a4a;
+        }
+        body.dark-mode .verse-arabic {
+            background: #1e1e2f;
+            color: #f0f0f0;
+        }
+        body.dark-mode .verse-turkish {
+            background: #1e1e2f;
+            color: #d0d0d0;
+        }
+        body.dark-mode .error {
+            background: #4a2020;
+            color: #ffaaaa;
+        }
+        body.dark-mode .success {
+            background: #1a3a1a;
+            color: #aaffaa;
+        }
+
+        /* Aksiyon Butonları */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            padding: 8px 15px;
+            font-size: 0.85em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .action-btn.copy {
+            background: #17a2b8;
+            color: white;
+        }
+        .action-btn.favorite {
+            background: #ffc107;
+            color: #000;
+        }
+        .action-btn.favorite.active {
+            background: #ff6b6b;
+            color: white;
+        }
+        .action-btn.share {
+            background: #28a745;
+            color: white;
+        }
+        .action-btn.whatsapp {
+            background: #25D366;
+            color: white;
+        }
+        .action-btn.twitter {
+            background: #1DA1F2;
+            color: white;
+        }
+        .action-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Tema Toggle */
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5em;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+        body.dark-mode .theme-toggle {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        }
+
+        /* Favoriler Badge */
+        .favorites-badge {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: #ff6b6b;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+        .favorites-badge:hover {
+            transform: scale(1.05);
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 140px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1001;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Sure Okuma Modu */
+        .reading-mode .verse-card {
+            border: none;
+            box-shadow: none;
+            margin-bottom: 10px;
+        }
+        .reading-mode .verse-arabic {
+            font-size: 32px;
+            border: none;
+            background: transparent;
+        }
     </style>
 </head>
 <body>
@@ -348,6 +523,8 @@
             <button class="tab" onclick="switchTab('translations')">🌐 Çoklu Meal</button>
             <button class="tab" onclick="switchTab('statistics')">📊 İstatistikler</button>
             <button class="tab" onclick="switchTab('frequency')">🔢 Frekans</button>
+            <button class="tab" onclick="switchTab('favorites')">⭐ Favoriler</button>
+            <button class="tab" onclick="switchTab('reading')">📖 Sure Oku</button>
         </div>
 
         <!-- ARAMA SEKMESİ -->
@@ -446,7 +623,46 @@
             </div>
             <div id="freqResults" class="results"></div>
         </div>
+
+        <!-- FAVORİLER SEKMESİ -->
+        <div id="favorites" class="tab-content">
+            <div class="search-section">
+                <h2>⭐ Favori Ayetlerim</h2>
+                <p style="margin-bottom: 15px; color: #666;">Kaydettiğiniz ayetleri burada görüntüleyin.</p>
+                <div class="search-group">
+                    <button onclick="loadFavorites()">Favorileri Yükle</button>
+                    <button onclick="exportFavorites()" style="background: #28a745;">📥 Dışa Aktar</button>
+                    <button onclick="clearFavorites()" style="background: #dc3545;">🗑️ Tümünü Sil</button>
+                </div>
+            </div>
+            <div id="favResults" class="results"></div>
+        </div>
+
+        <!-- SURE OKUMA SEKMESİ -->
+        <div id="reading" class="tab-content">
+            <div class="search-section">
+                <h2>📖 Sure Okuma</h2>
+                <p style="margin-bottom: 15px; color: #666;">Tam sure görüntüleme ve okuma modu.</p>
+                <div class="search-group">
+                    <select id="suraSelect" style="max-width: 250px;">
+                        <option value="">Sure Seçin...</option>
+                    </select>
+                    <button onclick="loadFullSura()">Sureyi Yükle</button>
+                    <button onclick="toggleReadingMode()" id="readingModeBtn">📚 Okuma Modu</button>
+                </div>
+            </div>
+            <div id="readingResults" class="results"></div>
+        </div>
     </div>
+
+    <!-- Tema Toggle Butonu -->
+    <button class="theme-toggle" onclick="toggleDarkMode()" title="Karanlık/Aydınlık Mod">🌙</button>
+    
+    <!-- Favoriler Badge -->
+    <div class="favorites-badge" onclick="switchTab('favorites'); document.querySelector('[onclick*=favorites]').click();" id="favBadge">⭐ <span id="favCount">0</span></div>
+    
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
 
     <script>
         const API_BASE = 'https://kuran-corpus-api.onrender.com';
@@ -532,6 +748,18 @@
                 html += `<div class="verse-meta">
                     <div class="meta-item">📖 ${verse.type || 'verse'}</div>
                     ${verse.note ? `<div class="meta-item">ℹ️ ${verse.note}</div>` : ''}
+                </div>`;
+                
+                // Aksiyon butonları
+                const ref = verse.reference || `${verse.surah_number}:${verse.verse_number}`;
+                const arabicEsc = (verse.arabic || '').replace(/`/g, "'");
+                const turkishEsc = (verse.turkish || verse.translation || '').replace(/`/g, "'");
+                const isFav = isFavorite(ref);
+                html += `<div class="action-buttons">
+                    <button class="action-btn favorite ${isFav ? 'active' : ''}" onclick="toggleFavorite('${ref}', \`${arabicEsc}\`, \`${turkishEsc}\`); this.classList.toggle('active');">${isFav ? '❤️' : '⭐'}</button>
+                    <button class="action-btn copy" onclick="copyVerse(\`${arabicEsc}\`, \`${turkishEsc}\`, '${ref}')">📋</button>
+                    <button class="action-btn whatsapp" onclick="shareWhatsApp(\`${arabicEsc}\`, \`${turkishEsc}\`, '${ref}')">📱</button>
+                    <button class="action-btn twitter" onclick="shareTwitter(\`${arabicEsc}\`, \`${turkishEsc}\`, '${ref}')">𝕏</button>
                 </div>`;
                 
                 card.innerHTML = html;
@@ -924,11 +1152,213 @@
         document.getElementById('searchInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') performSearch();
         });
-        
+
+        // ===== YENİ ÖZELLİKLER =====
+
+        // Favoriler - localStorage
+        let favorites = JSON.parse(localStorage.getItem('quran_favorites') || '[]');
+        updateFavCount();
+
+        function updateFavCount() {
+            document.getElementById('favCount').textContent = favorites.length;
+        }
+
+        function toggleFavorite(reference, arabic, turkish) {
+            const index = favorites.findIndex(f => f.reference === reference);
+            if (index > -1) {
+                favorites.splice(index, 1);
+                showToast('❌ Favorilerden kaldırıldı');
+            } else {
+                favorites.push({ reference, arabic, turkish, date: new Date().toISOString() });
+                showToast('⭐ Favorilere eklendi');
+            }
+            localStorage.setItem('quran_favorites', JSON.stringify(favorites));
+            updateFavCount();
+        }
+
+        function isFavorite(reference) {
+            return favorites.some(f => f.reference === reference);
+        }
+
+        function loadFavorites() {
+            const resultsDiv = document.getElementById('favResults');
+            if (favorites.length === 0) {
+                resultsDiv.innerHTML = '<div class="error">Henüz favori ayet eklemediniz. Ayetlerin altındaki ⭐ butonuna tıklayarak ekleyebilirsiniz.</div>';
+                return;
+            }
+            
+            let html = `<div class="success">✓ ${favorites.length} favori ayet</div>`;
+            favorites.forEach(fav => {
+                html += `<div class="verse-card">
+                    <div class="verse-reference">${fav.reference}</div>
+                    <div class="verse-arabic">${fav.arabic}</div>
+                    <div class="verse-turkish">${fav.turkish}</div>
+                    <div class="action-buttons">
+                        <button class="action-btn favorite active" onclick="toggleFavorite('${fav.reference}', '', ''); loadFavorites();">❌ Kaldır</button>
+                        <button class="action-btn copy" onclick="copyVerse('${fav.arabic}', '${fav.turkish}', '${fav.reference}')">📋 Kopyala</button>
+                    </div>
+                </div>`;
+            });
+            resultsDiv.innerHTML = html;
+        }
+
+        function exportFavorites() {
+            if (favorites.length === 0) {
+                showToast('❌ Favorileriniz boş');
+                return;
+            }
+            let text = '=== FAVORİ AYETLERİM ===\n\n';
+            favorites.forEach((fav, i) => {
+                text += `${i+1}. ${fav.reference}\n${fav.arabic}\n${fav.turkish}\n\n`;
+            });
+            const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'favori_ayetlerim.txt';
+            a.click();
+            showToast('📥 Favoriler indirildi');
+        }
+
+        function clearFavorites() {
+            if (confirm('Tüm favorileri silmek istediğinize emin misiniz?')) {
+                favorites = [];
+                localStorage.setItem('quran_favorites', JSON.stringify(favorites));
+                updateFavCount();
+                loadFavorites();
+                showToast('🗑️ Tüm favoriler silindi');
+            }
+        }
+
+        // Kopyala fonksiyonu
+        function copyVerse(arabic, turkish, reference) {
+            const text = `${reference}\n\n${arabic}\n\n${turkish}\n\n— Kuran Corpus API`;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('📋 Panoya kopyalandı');
+            });
+        }
+
+        // Paylaş fonksiyonları
+        function shareWhatsApp(arabic, turkish, reference) {
+            const text = encodeURIComponent(`${reference}\n\n${arabic}\n\n${turkish}\n\n— Kuran Corpus`);
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+        }
+
+        function shareTwitter(arabic, turkish, reference) {
+            const text = encodeURIComponent(`${reference}\n${turkish.substring(0, 200)}...\n\n#Kuran`);
+            window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+        }
+
+        // Toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // Karanlık mod
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            document.querySelector('.theme-toggle').textContent = isDark ? '☀️' : '🌙';
+            showToast(isDark ? '🌙 Karanlık mod açıldı' : '☀️ Aydınlık mod açıldı');
+        }
+
+        // Sure listesi yükle
+        async function loadSuraList() {
+            const select = document.getElementById('suraSelect');
+            try {
+                const response = await fetch(`${API_BASE}/api/stats`);
+                const data = await response.json();
+                if (data.status === 'success' && data.data.suras) {
+                    data.data.suras.forEach(s => {
+                        const option = document.createElement('option');
+                        option.value = s.n;
+                        option.textContent = `${s.n}. ${s.name} (${s.vc} ayet)`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (e) {
+                // Fallback - bazı popüler sureler
+                const suras = [{n:1,name:'Fatiha'},{n:2,name:'Bakara'},{n:36,name:'Yasin'},{n:55,name:'Rahman'},{n:67,name:'Mülk'},{n:112,name:'İhlas'},{n:114,name:'Nas'}];
+                suras.forEach(s => {
+                    const option = document.createElement('option');
+                    option.value = s.n;
+                    option.textContent = `${s.n}. ${s.name}`;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        // Tam sure yükle
+        async function loadFullSura() {
+            const suraNum = document.getElementById('suraSelect').value;
+            const resultsDiv = document.getElementById('readingResults');
+            
+            if (!suraNum) {
+                resultsDiv.innerHTML = '<div class="error">Lütfen bir sure seçin.</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Sure yükleniyor</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/sura/${suraNum}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    let html = `<h2 style="margin-bottom: 20px; text-align: center;">${suraNum}. ${data.data.name}</h2>`;
+                    html += `<p style="text-align: center; color: #666; margin-bottom: 20px;">${data.data.verse_count} ayet</p>`;
+                    
+                    data.data.verses.forEach(v => {
+                        const isFav = isFavorite(v.reference);
+                        html += `<div class="verse-card">
+                            <div class="verse-reference">${v.reference}</div>
+                            <div class="verse-arabic">${v.arabic}</div>
+                            <div class="verse-turkish">${v.turkish}</div>
+                            <div class="action-buttons">
+                                <button class="action-btn favorite ${isFav ? 'active' : ''}" onclick="toggleFavorite('${v.reference}', \`${v.arabic.replace(/`/g, "'")}\`, \`${v.turkish.replace(/`/g, "'")}\`); this.classList.toggle('active');">${isFav ? '❤️ Favoride' : '⭐ Favorile'}</button>
+                                <button class="action-btn copy" onclick="copyVerse(\`${v.arabic.replace(/`/g, "'")}\`, \`${v.turkish.replace(/`/g, "'")}\`, '${v.reference}')">📋 Kopyala</button>
+                                <button class="action-btn whatsapp" onclick="shareWhatsApp(\`${v.arabic.replace(/`/g, "'")}\`, \`${v.turkish.replace(/`/g, "'")}\`, '${v.reference}')">📱 WhatsApp</button>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    resultsDiv.innerHTML = html;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">Sure yüklenemedi.</div>';
+            }
+        }
+
+        // Okuma modu toggle
+        function toggleReadingMode() {
+            const results = document.getElementById('readingResults');
+            results.classList.toggle('reading-mode');
+            const btn = document.getElementById('readingModeBtn');
+            const isReading = results.classList.contains('reading-mode');
+            btn.textContent = isReading ? '📖 Normal Mod' : '📚 Okuma Modu';
+            showToast(isReading ? '📚 Okuma modu açıldı' : '📖 Normal mod');
+        }
+
         // Sayfa yüklendiğinde
         window.onload = function() {
             console.log('🕌 Kuran Corpus API - Gelişmiş Web Arayüzü');
             console.log('📡 API URL:', API_BASE);
+            
+            // Karanlık mod kontrolü
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                document.querySelector('.theme-toggle').textContent = '☀️';
+            }
+            
+            // Sure listesi yükle
+            loadSuraList();
+            
+            // Favori sayısını güncelle
+            updateFavCount();
         };
     </script>
 </body>
