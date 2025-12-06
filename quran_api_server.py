@@ -109,6 +109,50 @@ except Exception as e:
     MULTI_TRANSLATIONS = {}
     print(f"   ⚠ Çoklu meal verileri yüklenemedi: {e}")
 
+# Kelime kelime çeviri yükle
+try:
+    wbw_path = os.path.join(DATA_DIR, 'data_word_by_word.json')
+    print(f"   Loading: {wbw_path}")
+    with open(wbw_path, 'r', encoding='utf-8') as f:
+        WORD_BY_WORD = json.load(f)
+    print(f"   ✓ {len(WORD_BY_WORD)} ayet için kelime kelime çeviri yüklendi")
+except Exception as e:
+    WORD_BY_WORD = {}
+    print(f"   ⚠ Kelime kelime çeviri yüklenemedi: {e}")
+
+# Transliterasyon yükle
+try:
+    translit_path = os.path.join(DATA_DIR, 'data_transliteration.json')
+    print(f"   Loading: {translit_path}")
+    with open(translit_path, 'r', encoding='utf-8') as f:
+        TRANSLITERATION = json.load(f)
+    print(f"   ✓ {len(TRANSLITERATION)} ayet transliterasyonu yüklendi")
+except Exception as e:
+    TRANSLITERATION = {}
+    print(f"   ⚠ Transliterasyon yüklenemedi: {e}")
+
+# Arapça tefsir yükle
+try:
+    tafsir_path = os.path.join(DATA_DIR, 'data_tafsir_arabic.json')
+    print(f"   Loading: {tafsir_path}")
+    with open(tafsir_path, 'r', encoding='utf-8') as f:
+        TAFSIR_ARABIC = json.load(f)
+    print(f"   ✓ {len(TAFSIR_ARABIC)} ayet tefsiri yüklendi")
+except Exception as e:
+    TAFSIR_ARABIC = {}
+    print(f"   ⚠ Arapça tefsir yüklenemedi: {e}")
+
+# Kelime frekansı yükle
+try:
+    freq_path = os.path.join(DATA_DIR, 'data_word_frequency.json')
+    print(f"   Loading: {freq_path}")
+    with open(freq_path, 'r', encoding='utf-8') as f:
+        WORD_FREQUENCY = json.load(f)
+    print(f"   ✓ Kelime frekansı yüklendi")
+except Exception as e:
+    WORD_FREQUENCY = {}
+    print(f"   ⚠ Kelime frekansı yüklenemedi: {e}")
+
 print("✅ Veriler hazır!\n")
 
 # Sure isimlerini hazırla
@@ -481,6 +525,168 @@ def list_translations():
     return APIResponse.success({
         "count": len(translations_info),
         "translations": translations_info
+    })
+
+# ============================================================================
+# KELİME KELİME ÇEVİRİ ENDPOİNT'İ
+# ============================================================================
+
+@app.route('/api/word-by-word/<int:sura>/<int:verse>')
+@rate_limit
+def get_word_by_word(sura, verse):
+    """Kelime kelime Türkçe çeviri"""
+    verse_data = get_verse_data(sura, verse)
+    if not verse_data:
+        return APIResponse.error(f"Verse {sura}:{verse} not found", "NOT_FOUND", 404)
+    
+    key = f"{sura}:{verse}"
+    arabic_words = verse_data['arabic'].split()
+    
+    wbw_list = WORD_BY_WORD.get(key, [])
+    
+    # Morfoloji verisini de ekle
+    morph_data = MORPHOLOGY.get(key, [])
+    
+    words = []
+    for i, arabic in enumerate(arabic_words):
+        word_info = {
+            "position": i + 1,
+            "arabic": arabic,
+            "turkish": wbw_list[i]['t'] if i < len(wbw_list) else "",
+        }
+        # Morfoloji varsa ekle
+        if i < len(morph_data):
+            word_info["root"] = morph_data[i].get('r', '')
+            word_info["pos"] = morph_data[i].get('p', '')
+        words.append(word_info)
+    
+    return APIResponse.success({
+        "reference": verse_data['reference'],
+        "surah_name": verse_data['surah_name'],
+        "arabic": verse_data['arabic'],
+        "turkish": verse_data['turkish'],
+        "word_count": len(words),
+        "words": words
+    })
+
+# ============================================================================
+# TRANSLİTERASYON ENDPOİNT'İ
+# ============================================================================
+
+@app.route('/api/transliteration/<int:sura>/<int:verse>')
+@rate_limit
+def get_transliteration(sura, verse):
+    """Ayet transliterasyonu (Latin harfli okunuş)"""
+    verse_data = get_verse_data(sura, verse)
+    if not verse_data:
+        return APIResponse.error(f"Verse {sura}:{verse} not found", "NOT_FOUND", 404)
+    
+    key = f"{sura}:{verse}"
+    translit = TRANSLITERATION.get(key, "")
+    
+    return APIResponse.success({
+        "reference": verse_data['reference'],
+        "surah_name": verse_data['surah_name'],
+        "arabic": verse_data['arabic'],
+        "transliteration": translit,
+        "turkish": verse_data['turkish']
+    })
+
+# ============================================================================
+# ARAPÇA TEFSİR ENDPOİNT'İ
+# ============================================================================
+
+@app.route('/api/tafsir/<int:sura>/<int:verse>')
+@rate_limit
+def get_tafsir(sura, verse):
+    """Arapça tefsir (Müyesser)"""
+    verse_data = get_verse_data(sura, verse)
+    if not verse_data:
+        return APIResponse.error(f"Verse {sura}:{verse} not found", "NOT_FOUND", 404)
+    
+    key = f"{sura}:{verse}"
+    tafsir = TAFSIR_ARABIC.get(key, "")
+    
+    return APIResponse.success({
+        "reference": verse_data['reference'],
+        "surah_name": verse_data['surah_name'],
+        "arabic": verse_data['arabic'],
+        "tafsir_arabic": tafsir,
+        "turkish": verse_data['turkish']
+    })
+
+# ============================================================================
+# KELİME FREKANSI ENDPOİNT'İ
+# ============================================================================
+
+@app.route('/api/frequency')
+@rate_limit
+def get_word_frequency():
+    """En sık kullanılan kelimeler"""
+    limit = request.args.get('limit', 100, type=int)
+    limit = min(limit, 500)  # Max 500
+    
+    top_words = WORD_FREQUENCY.get('top_words', [])[:limit]
+    
+    return APIResponse.success({
+        "count": len(top_words),
+        "words": top_words
+    })
+
+# ============================================================================
+# DETAYLI AYET BİLGİSİ (TÜM VERİLER)
+# ============================================================================
+
+@app.route('/api/verse-full/<int:sura>/<int:verse>')
+@rate_limit
+def get_verse_full(sura, verse):
+    """Ayetin tüm detayları - tek endpoint'te"""
+    verse_data = get_verse_data(sura, verse)
+    if not verse_data:
+        return APIResponse.error(f"Verse {sura}:{verse} not found", "NOT_FOUND", 404)
+    
+    key = f"{sura}:{verse}"
+    arabic_words = verse_data['arabic'].split()
+    
+    # Kelime kelime çeviri
+    wbw_list = WORD_BY_WORD.get(key, [])
+    
+    # Morfoloji
+    morph_data = MORPHOLOGY.get(key, [])
+    
+    # Kelime detayları
+    words = []
+    for i, arabic in enumerate(arabic_words):
+        word_info = {
+            "position": i + 1,
+            "arabic": arabic,
+            "turkish": wbw_list[i]['t'] if i < len(wbw_list) else "",
+        }
+        if i < len(morph_data):
+            word_info["root"] = morph_data[i].get('r', '')
+            word_info["lemma"] = morph_data[i].get('l', '').lstrip(',{')
+            word_info["pos"] = morph_data[i].get('p', '')
+        words.append(word_info)
+    
+    # Çoklu mealler
+    translations = []
+    for code, data in MULTI_TRANSLATIONS.items():
+        if key in data.get('verses', {}):
+            translations.append({
+                "name": data['short'],
+                "text": data['verses'][key]
+            })
+    
+    return APIResponse.success({
+        "reference": verse_data['reference'],
+        "surah_name": verse_data['surah_name'],
+        "arabic": verse_data['arabic'],
+        "turkish": verse_data['turkish'],
+        "transliteration": TRANSLITERATION.get(key, ""),
+        "tafsir_arabic": TAFSIR_ARABIC.get(key, ""),
+        "word_count": len(words),
+        "words": words,
+        "translations": translations
     })
 
 # Helper function

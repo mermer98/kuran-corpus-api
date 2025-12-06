@@ -344,9 +344,10 @@
         <div class="tabs">
             <button class="tab active" onclick="switchTab('search')">🔍 Arama</button>
             <button class="tab" onclick="switchTab('morphology')">📚 Morfoloji</button>
-            <button class="tab" onclick="switchTab('statistics')">📊 İstatistikler</button>
+            <button class="tab" onclick="switchTab('wordbyword')">📝 Kelime Kelime</button>
             <button class="tab" onclick="switchTab('translations')">🌐 Çoklu Meal</button>
-            <button class="tab" onclick="switchTab('advanced')">⚡ Gelişmiş</button>
+            <button class="tab" onclick="switchTab('statistics')">📊 İstatistikler</button>
+            <button class="tab" onclick="switchTab('frequency')">🔢 Frekans</button>
         </div>
 
         <!-- ARAMA SEKMESİ -->
@@ -419,21 +420,31 @@
             <div id="transResults" class="results"></div>
         </div>
 
-        <!-- GELİŞMİŞ SEKMESİ -->
-        <div id="advanced" class="tab-content">
+        <!-- KELİME KELİME SEKMESİ -->
+        <div id="wordbyword" class="tab-content">
             <div class="search-section">
-                <h2>⚡ Gelişmiş Özellikler</h2>
+                <h2>📝 Kelime Kelime Çeviri & Transliterasyon</h2>
+                <p style="margin-bottom: 15px; color: #666;">Her kelimenin Türkçe karşılığını, Latin okunuşunu ve Arapça tefsirini görüntüleyin.</p>
                 <div class="search-group">
-                    <input type="text" id="advancedQuery" placeholder="Gelişmiş arama sorgusu">
-                    <select id="advancedType">
-                        <option value="regex">Regex Arama</option>
-                        <option value="wildcard">Joker Karakter</option>
-                        <option value="phonetic">Fonetik Arama</option>
-                    </select>
-                    <button onclick="advancedSearch()">Gelişmiş Ara</button>
+                    <input type="text" id="wbwSurah" placeholder="Sure No (1-114)" style="max-width: 150px;">
+                    <input type="text" id="wbwVerse" placeholder="Ayet No" style="max-width: 150px;">
+                    <button onclick="getWordByWord()">Kelime Kelime Getir</button>
                 </div>
             </div>
-            <div id="advancedResults" class="results"></div>
+            <div id="wbwResults" class="results"></div>
+        </div>
+
+        <!-- FREKANS SEKMESİ -->
+        <div id="frequency" class="tab-content">
+            <div class="search-section">
+                <h2>🔢 Kelime Frekansı</h2>
+                <p style="margin-bottom: 15px; color: #666;">Kuran'da en sık geçen kelimeleri görüntüleyin.</p>
+                <div class="search-group">
+                    <input type="text" id="freqLimit" placeholder="Limit (varsayılan: 50)" style="max-width: 150px;">
+                    <button onclick="getWordFrequency()">Frekansları Getir</button>
+                </div>
+            </div>
+            <div id="freqResults" class="results"></div>
         </div>
     </div>
 
@@ -777,6 +788,132 @@
                 }
             } catch (error) {
                 resultsDiv.innerHTML = '<div class="error">Arama yapılamadı.</div>';
+            }
+        }
+
+        // Kelime Kelime Çeviri
+        async function getWordByWord() {
+            const surah = document.getElementById('wbwSurah').value;
+            const verse = document.getElementById('wbwVerse').value;
+            const resultsDiv = document.getElementById('wbwResults');
+            
+            if (!surah || !verse) {
+                resultsDiv.innerHTML = '<div class="error">Lütfen sure ve ayet numarası girin.</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Kelime kelime çeviri yükleniyor</div>';
+            
+            try {
+                // Tüm veriyi tek endpoint'ten al
+                const response = await fetch(`${API_BASE}/api/verse-full/${surah}/${verse}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const d = data.data;
+                    let html = '<div class="verse-card">';
+                    html += `<div class="verse-reference">${d.surah_name} ${d.reference}</div>`;
+                    html += `<div class="verse-arabic">${d.arabic}</div>`;
+                    
+                    // Transliterasyon
+                    if (d.transliteration) {
+                        html += `<div style="margin: 15px 0; padding: 15px; background: #e8f4f8; border-radius: 10px; border-left: 4px solid #17a2b8;">
+                            <h4 style="color: #17a2b8; margin-bottom: 10px;">🔤 Okunuşu (Transliterasyon)</h4>
+                            <p style="font-size: 18px; font-style: italic; line-height: 1.8;">${d.transliteration}</p>
+                        </div>`;
+                    }
+                    
+                    // Türkçe meal
+                    html += `<div class="verse-turkish">${d.turkish}</div>`;
+                    
+                    // Kelime kelime çeviri
+                    if (d.word_by_word && d.word_by_word.length > 0) {
+                        html += `<div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                            <h4 style="color: #667eea; margin-bottom: 15px;">📝 Kelime Kelime Çeviri (${d.word_by_word.length} kelime)</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">`;
+                        
+                        d.word_by_word.forEach((w, idx) => {
+                            html += `<div style="padding: 15px; background: white; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                <div style="font-family: 'Traditional Arabic', serif; font-size: 24px; color: #2c3e50; margin-bottom: 8px;">${w.arabic}</div>
+                                <div style="font-size: 14px; color: #667eea; font-weight: bold;">${w.turkish}</div>
+                                <div style="font-size: 11px; color: #999; margin-top: 5px;">${idx + 1}. kelime</div>
+                            </div>`;
+                        });
+                        
+                        html += '</div></div>';
+                    }
+                    
+                    // Arapça Tefsir
+                    if (d.tafsir_arabic) {
+                        html += `<div style="margin: 15px 0; padding: 15px; background: #fff3cd; border-radius: 10px; border-left: 4px solid #ffc107;">
+                            <h4 style="color: #856404; margin-bottom: 10px;">📖 Arapça Tefsir (el-Müyesser)</h4>
+                            <p style="font-family: 'Traditional Arabic', serif; font-size: 20px; line-height: 2; text-align: right; direction: rtl;">${d.tafsir_arabic}</p>
+                        </div>`;
+                    }
+                    
+                    // Morfoloji
+                    if (d.morphology && d.morphology.length > 0) {
+                        html += `<div style="margin: 15px 0; padding: 15px; background: #e8f5e9; border-radius: 10px; border-left: 4px solid #28a745;">
+                            <h4 style="color: #28a745; margin-bottom: 15px;">🔬 Morfolojik Analiz</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">`;
+                        
+                        d.morphology.forEach(m => {
+                            html += `<div style="padding: 10px; background: white; border-radius: 8px;">
+                                <div style="font-family: 'Traditional Arabic', serif; font-size: 20px; text-align: right;">${m.segment}</div>
+                                <div style="font-size: 12px; color: #28a745;">Kök: ${m.root}</div>
+                                <div style="font-size: 12px; color: #6c757d;">${m.pos_display}</div>
+                            </div>`;
+                        });
+                        
+                        html += '</div></div>';
+                    }
+                    
+                    html += '</div>';
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">Ayet bulunamadı.</div>';
+                }
+            } catch (error) {
+                console.error('Word by word error:', error);
+                resultsDiv.innerHTML = '<div class="error">Veri yüklenemedi. Lütfen tekrar deneyin.</div>';
+            }
+        }
+
+        // Kelime Frekansı
+        async function getWordFrequency() {
+            const limit = document.getElementById('freqLimit').value || 50;
+            const resultsDiv = document.getElementById('freqResults');
+            
+            resultsDiv.innerHTML = '<div class="loading">Frekanslar yükleniyor</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/frequency?limit=${limit}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const words = data.data.words;
+                    let html = `<div class="success">✓ En sık geçen ${words.length} kelime</div>`;
+                    
+                    html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 20px;">';
+                    
+                    words.forEach((w, idx) => {
+                        const size = Math.max(14, 28 - idx * 0.3);
+                        const opacity = Math.max(0.6, 1 - idx * 0.008);
+                        html += `<div style="padding: 15px; background: linear-gradient(135deg, rgba(102,126,234,${opacity}) 0%, rgba(118,75,162,${opacity}) 100%); border-radius: 10px; text-align: center; color: white;">
+                            <div style="font-family: 'Traditional Arabic', serif; font-size: ${size}px; margin-bottom: 5px;">${w.word}</div>
+                            <div style="font-size: 24px; font-weight: bold;">${w.count}</div>
+                            <div style="font-size: 12px; opacity: 0.8;">#${idx + 1}</div>
+                        </div>`;
+                    });
+                    
+                    html += '</div>';
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">Frekans verileri yüklenemedi.</div>';
+                }
+            } catch (error) {
+                console.error('Frequency error:', error);
+                resultsDiv.innerHTML = '<div class="error">Bağlantı hatası.</div>';
             }
         }
 
