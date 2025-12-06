@@ -827,16 +827,19 @@
                     html += `<div class="verse-turkish">${d.turkish}</div>`;
                     
                     // Kelime kelime çeviri
-                    if (d.word_by_word && d.word_by_word.length > 0) {
+                    const wordData = d.word_by_word || d.words || [];
+                    if (wordData.length > 0) {
                         html += `<div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 10px;">
-                            <h4 style="color: #667eea; margin-bottom: 15px;">📝 Kelime Kelime Çeviri (${d.word_by_word.length} kelime)</h4>
+                            <h4 style="color: #667eea; margin-bottom: 15px;">📝 Kelime Kelime Çeviri (${wordData.length} kelime)</h4>
                             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">`;
                         
-                        d.word_by_word.forEach((w, idx) => {
+                        wordData.forEach((w, idx) => {
+                            const turkishText = w.turkish || '—';
                             html += `<div style="padding: 15px; background: white; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                                 <div style="font-family: 'Traditional Arabic', serif; font-size: 24px; color: #2c3e50; margin-bottom: 8px;">${w.arabic}</div>
-                                <div style="font-size: 14px; color: #667eea; font-weight: bold;">${w.turkish}</div>
-                                <div style="font-size: 11px; color: #999; margin-top: 5px;">${idx + 1}. kelime</div>
+                                <div style="font-size: 14px; color: #667eea; font-weight: bold;">${turkishText}</div>
+                                ${w.root ? `<div style="font-size: 11px; color: #28a745; margin-top: 5px;">Kök: ${w.root}</div>` : ''}
+                                <div style="font-size: 11px; color: #999; margin-top: 3px;">${idx + 1}. kelime</div>
                             </div>`;
                         });
                         
