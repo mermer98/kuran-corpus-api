@@ -349,6 +349,28 @@ def get_morphology(sura, verse):
     arabic_text = verse_data['arabic']
     arabic_words = arabic_text.split()
     
+    # Lemma temizleme fonksiyonu
+    def clean_lemma(lemma):
+        """Lemma'daki özel karakterleri temizle"""
+        if not lemma:
+            return ''
+        # Baştaki , { ve } karakterlerini temizle
+        return lemma.lstrip(',{').rstrip('}')
+    
+    # POS etiketlerini Türkçeye çevir
+    pos_translations = {
+        'N': 'İsim', 'V': 'Fiil', 'ADJ': 'Sıfat', 'PN': 'Özel İsim',
+        'P': 'Edat', 'PRON': 'Zamir', 'DET': 'Belirleyici', 'CONJ': 'Bağlaç',
+        'PART': 'Parçacık', 'ADV': 'Zarf', 'INTJ': 'Ünlem',
+        'P+N': 'Edat+İsim', 'DET+N': 'Belirleyici+İsim', 'DET+ADJ': 'Belirleyici+Sıfat',
+        'PRON+V': 'Zamir+Fiil', 'CONJ+V': 'Bağlaç+Fiil'
+    }
+    
+    def get_pos_display(pos):
+        """POS etiketini hem İngilizce hem Türkçe göster"""
+        tr = pos_translations.get(pos, '')
+        return f"{pos} ({tr})" if tr else pos
+    
     # Morfoloji verisini kontrol et
     if key in MORPHOLOGY:
         morph_data = MORPHOLOGY[key]
@@ -357,14 +379,16 @@ def get_morphology(sura, verse):
         for i, word_info in enumerate(morph_data):
             # Arapça kelimeyi orijinal metinden al (daha okunabilir)
             arabic_word = arabic_words[i] if i < len(arabic_words) else word_info.get('w', '')
+            raw_pos = word_info.get('p', 'WORD')
             
             segments.append({
                 "position": i + 1,
                 "segment": arabic_word,
                 "buckwalter": word_info.get('w', ''),
                 "root": word_info.get('r', '—'),
-                "lemma": word_info.get('l', ''),
-                "pos": word_info.get('p', 'WORD')
+                "lemma": clean_lemma(word_info.get('l', '')),
+                "pos": raw_pos,
+                "pos_display": get_pos_display(raw_pos)
             })
         
         return APIResponse.success({
